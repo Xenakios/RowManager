@@ -5,8 +5,17 @@
 #include "juce_audio_basics/juce_audio_basics.h"
 #include "juce_core/juce_core.h"
 #include "row_engine.h"
+#include "containers/choc_SingleReaderSingleWriterFIFO.h"
 
-//==============================================================================
+struct MessageToUI
+{
+    int opcode = 0;
+    int pitchclassplaypos = 0;
+    int soundingpitch = 0;
+    int octaveplaypos = 0;
+    int velocityplaypos = 0;
+};
+
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
 {
   public:
@@ -56,13 +65,15 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
 
     void transformRow(int whichRow, int transpose, bool invert, bool reverse);
 
-    void setRow(Row r);
+    void setRow(int which, Row r);
     juce::MidiKeyboardState keyboardState;
     juce::CriticalSection cs;
     std::vector<std::tuple<int, int>> playingNotes;
     juce::MidiBuffer generatedMessages;
     int playpos = 0;
     int pulselen = 11025;
+    choc::fifo::SingleReaderSingleWriterFIFO<MessageToUI> fifo_to_ui;
+    std::atomic<bool> row_was_changed{false};
 
   private:
     //==============================================================================

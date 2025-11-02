@@ -6,6 +6,10 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 add_subdirectory(../JUCE ignore EXCLUDE_FROM_ALL)                    # If you've put JUCE in a subdirectory called JUCE
 
+include_directories(
+    libs/choc/choc
+)
+
 juce_add_plugin(RowManager
     # VERSION ...                               # Set this if the plugin version is different to the project version
     # ICON_BIG ...                              # ICON_* arguments specify a path to an image file to use as an icon for the Standalone

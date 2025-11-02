@@ -13,6 +13,12 @@ class MultiStepComponent : public juce::Component
   public:
     MultiStepComponent() {}
     bool readonly = true;
+    int playingstep = -1;
+    void setPlayingStep(int i)
+    {
+        playingstep = i;
+        repaint();
+    }
     std::function<void()> OnEdited = nullptr;
     void setNumActiveSteps(size_t numsteps) { steps.num_active_entries; }
     void mouseDown(const juce::MouseEvent &ev) override
@@ -45,7 +51,9 @@ class MultiStepComponent : public juce::Component
                 juce::jmap<double>(ev.y, 0.0, getHeight(), steps.num_active_entries - 1, 0);
             steps.entries[draggingIndex] =
                 juce::jlimit<int>(0, steps.num_active_entries - 1, steps.entries[draggingIndex]);
-            DBG(deltay);
+            // steps.setTransform(steps.tprops.transpose, steps.tprops.inverted,
+            //                    steps.tprops.reversed);
+            //  DBG(deltay);
             repaint();
             if (OnEdited)
                 OnEdited();
@@ -63,10 +71,20 @@ class MultiStepComponent : public juce::Component
                 g.setColour(juce::Colours::yellow);
             else
                 g.setColour(juce::Colours::green);
-            float steph = juce::jmap<double>(steps.entries[i], 0, steps.num_active_entries, getHeight() - 2.0, 0);
-            g.fillRect((float)1.0 + i * 25, steph, 24.0, getHeight() - steph);
+            float steph = juce::jmap<double>(steps.entries[i], 0, steps.num_active_entries,
+                                             getHeight() - 2.0, 0);
+            g.fillRect((float)1.0 + i * 25, steph, 12.0, getHeight() - steph);
+            if (i == playingstep)
+                g.setColour(juce::Colours::cyan);
+            else
+                g.setColour(juce::Colours::cyan.darker());
+            steph = juce::jmap<double>(steps.transformed_entries[i], 0, steps.num_active_entries,
+                                       getHeight() - 2.0, 0);
+            g.fillRect((float)1.0 + i * 25 + 13, steph, 12.0, getHeight() - steph);
             g.setColour(juce::Colours::white);
-            g.drawText(juce::String(steps.entries[i]), juce::Rectangle<int>(1.0 + i * 25, 0.0, 24, 20.0),
+
+            g.drawText(juce::String(steps.entries[i]),
+                       juce::Rectangle<int>(1.0 + i * 25, 0.0, 24, 20.0),
                        juce::Justification::centred);
         }
     }
@@ -81,11 +99,13 @@ class MultiStepComponent : public juce::Component
 
 //==============================================================================
 class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor,
-                                              public juce::MidiKeyboardStateListener
+                                              public juce::MidiKeyboardStateListener,
+                                              public juce::Timer
 {
   public:
     explicit AudioPluginAudioProcessorEditor(AudioPluginAudioProcessor &);
     ~AudioPluginAudioProcessorEditor() override;
+    void timerCallback() override;
     void handleNoteOn(juce::MidiKeyboardState *source, int midiChannel, int midiNoteNumber,
                       float velocity) override;
 
@@ -102,8 +122,7 @@ class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor,
     size_t numrow_elements = 16;
     juce::Slider transposeSlider;
     MultiStepComponent rowEntryComponent;
-    MultiStepComponent transformedRowComponent;
-
+    MultiStepComponent octaveRowComponent;
     juce::ToggleButton invertButton;
     juce::ToggleButton reverseButton;
     juce::TextButton velocityMenuButton;

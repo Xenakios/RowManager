@@ -14,8 +14,9 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 #endif
       )
 {
+    fifo_to_ui.reset(1024);
     rowPitchClass = Row::make_chromatic(16);
-    pitchClassIterator = Row::Iterator(rowPitchClass);
+    pitchClassIterator = Row::Iterator(rowPitchClass, true);
 
     rowOctave.entries = {3, 2, 1, 0};
     rowOctave.num_active_entries = 4;
@@ -31,6 +32,10 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 void AudioPluginAudioProcessor::transformRow(int whichRow, int transpose, bool invert, bool reverse)
 {
     juce::ScopedLock locker(cs);
+    if (whichRow == 0)
+    {
+        rowPitchClass.setTransform(transpose, invert, reverse);
+    }
     if (whichRow == 1)
     {
         rowVelocity.setTransform(transpose, invert, reverse);
@@ -39,16 +44,19 @@ void AudioPluginAudioProcessor::transformRow(int whichRow, int transpose, bool i
     {
         rowOctave.setTransform(transpose, invert, reverse);
     }
+    row_was_changed = true;
 }
 
-void AudioPluginAudioProcessor::setRow(Row r)
+void AudioPluginAudioProcessor::setRow(int which, Row r)
 {
     juce::ScopedLock locker(cs);
-    rowPitchClass = r;
-    auto oldpos = pitchClassIterator.pos;
-    pitchClassIterator = Row::Iterator(rowPitchClass);
-    pitchClassIterator.pos = oldpos;
-    // playpos = 0;
+    if (which == 0)
+    {
+        auto oldpos = pitchClassIterator.pos;
+        rowPitchClass = r;
+        pitchClassIterator = Row::Iterator(rowPitchClass, true);
+        pitchClassIterator.pos = oldpos;
+    }
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor() {}
@@ -133,6 +141,13 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 {
     juce::ScopedNoDenormals noDenormals;
     juce::ScopedLock locker(cs);
+    if (row_was_changed)
+    {
+        MessageToUI msg;
+        msg.opcode = 1;
+        fifo_to_ui.push(msg);
+        row_was_changed = false;
+    }
     generatedMessages.clear();
     keyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(), true);
     bool noteontriggered = false;
@@ -176,8 +191,14 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     }
     if (noteontriggered)
     {
+        MessageToUI msg;
+        msg.pitchclassplaypos = pitchClassIterator.pos;
+        msg.octaveplaypos = octaveIterator.pos;
+        msg.velocityplaypos = velocityIterator.pos;
         int octave = octaveIterator.next();
         int note = 24 + octave * rowPitchClass.num_active_entries + pitchClassIterator.next();
+        msg.soundingpitch = note;
+        fifo_to_ui.push(msg);
         float velo = juce::jmap<float>(velocityIterator.next(), 0,
                                        rowVelocity.num_active_entries - 1, 0.25, 1.0);
         generatedMessages.addEvent(juce::MidiMessage::noteOn(1, note, velo), 0);

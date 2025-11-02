@@ -13,19 +13,19 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     addAndMakeVisible(keyboardComponent);
     processorRef.keyboardState.addListener(this);
 
-    rowEntryComponent.steps = Row::make_chromatic(numrow_elements);
+    rowEntryComponent.steps = processorRef.rowPitchClass;
 
     transposeSlider.setNumDecimalPlacesToDisplay(0);
     transposeSlider.setRange(0, numrow_elements - 1, 1);
     transposeSlider.onValueChange = [this]() { doTransform(); };
     addAndMakeVisible(transposeSlider);
-    addAndMakeVisible(transformedRowComponent);
+    // addAndMakeVisible(transformedRowComponent);
     addAndMakeVisible(rowEntryComponent);
     rowEntryComponent.setNumActiveSteps(numrow_elements);
     rowEntryComponent.readonly = false;
 
-    transformedRowComponent.setNumActiveSteps(numrow_elements);
-    transformedRowComponent.steps = rowEntryComponent.steps;
+    octaveRowComponent.steps = processorRef.rowOctave;
+    addAndMakeVisible(octaveRowComponent);
 
     invertButton.setButtonText("Invert");
     invertButton.onClick = [this]() { doTransform(); };
@@ -46,6 +46,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     rowEntryComponent.OnEdited = [this]() { doTransform(); };
 
     setSize(810, 450);
+    startTimer(100);
 }
 
 void AudioPluginAudioProcessorEditor::showMenuForRow(int which)
@@ -53,9 +54,9 @@ void AudioPluginAudioProcessorEditor::showMenuForRow(int which)
     juce::PopupMenu menu;
     int rowsize = 0;
     if (which == 1)
-        rowsize = 4;
+        rowsize = processorRef.rowOctave.num_active_entries;
     if (which == 2)
-        rowsize = 4;
+        rowsize = processorRef.rowVelocity.num_active_entries;
     for (int i = 0; i < rowsize; ++i)
     {
         menu.addItem("Prime " + juce::String(i),
@@ -105,16 +106,33 @@ void AudioPluginAudioProcessorEditor::handleNoteOn(juce::MidiKeyboardState *sour
     }
 }
 
+void AudioPluginAudioProcessorEditor::timerCallback()
+{
+    MessageToUI msg;
+    while (processorRef.fifo_to_ui.pop(msg))
+    {
+        if (msg.opcode == 0)
+        {
+            rowEntryComponent.setPlayingStep(msg.pitchclassplaypos);
+            octaveRowComponent.setPlayingStep(msg.octaveplaypos);
+        }
+        if (msg.opcode == 1)
+        {
+            octaveRowComponent.steps = processorRef.rowOctave;
+            octaveRowComponent.repaint();
+        }
+    }
+}
+
 void AudioPluginAudioProcessorEditor::doTransform()
 {
-    if (!rowEntryComponent.steps.isValid())
-        return;
-    auto transformed = rowEntryComponent.steps.transform((int)transposeSlider.getValue(),
-                                                         invertButton.getToggleState(),
-                                                         reverseButton.getToggleState());
-    transformedRowComponent.steps = transformed;
-    transformedRowComponent.repaint();
-    processorRef.setRow(transformedRowComponent.steps);
+    // if (!rowEntryComponent.steps.isValid())
+    //     return;
+    processorRef.setRow(0, rowEntryComponent.steps);
+    processorRef.transformRow(0, (int)transposeSlider.getValue(), invertButton.getToggleState(),
+                              reverseButton.getToggleState());
+    rowEntryComponent.steps = processorRef.rowPitchClass;
+    rowEntryComponent.repaint();
 }
 
 //==============================================================================
@@ -133,5 +151,5 @@ void AudioPluginAudioProcessorEditor::resized()
     octaveMenuButton.setBounds(velocityMenuButton.getRight() + 2, transposeSlider.getBottom(), 80,
                                24);
     keyboardComponent.setBounds(1, reverseButton.getBottom(), getWidth() - 2, 50);
-    transformedRowComponent.setBounds(1, getBottom() - 150, getWidth() - 2, 149);
+    octaveRowComponent.setBounds(1, getBottom() - 150, getWidth() - 2, 149);
 }
