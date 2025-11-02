@@ -20,12 +20,12 @@ class MultiStepComponent : public juce::Component
         repaint();
     }
     std::function<void()> OnEdited = nullptr;
-    void setNumActiveSteps(size_t numsteps) { steps.num_active_entries; }
+
     void mouseDown(const juce::MouseEvent &ev) override
     {
         if (readonly)
             return;
-        int index = (float)ev.x / 25.0;
+        int index = (float)ev.x / ((float)getWidth() / steps.num_active_entries);
         DBG(index);
         if (index >= 0 && index < steps.num_active_entries)
         {
@@ -65,6 +65,7 @@ class MultiStepComponent : public juce::Component
             g.fillAll(juce::Colours::black);
         else
             g.fillAll(juce::Colours::red.darker());
+        float stepw = (float)getWidth() / steps.num_active_entries;
         for (size_t i = 0; i < steps.num_active_entries; ++i)
         {
             if (i == draggingIndex)
@@ -73,18 +74,18 @@ class MultiStepComponent : public juce::Component
                 g.setColour(juce::Colours::green);
             float steph = juce::jmap<double>(steps.entries[i], 0, steps.num_active_entries,
                                              getHeight() - 2.0, 0);
-            g.fillRect((float)1.0 + i * 25, steph, 12.0, getHeight() - steph);
+            g.fillRect((float)1.0 + i * stepw, steph, stepw / 2.0, getHeight() - steph);
             if (i == playingstep)
                 g.setColour(juce::Colours::cyan);
             else
                 g.setColour(juce::Colours::cyan.darker());
             steph = juce::jmap<double>(steps.transformed_entries[i], 0, steps.num_active_entries,
                                        getHeight() - 2.0, 0);
-            g.fillRect((float)1.0 + i * 25 + 13, steph, 12.0, getHeight() - steph);
+            g.fillRect((float)1.0 + i * stepw + stepw/2, steph, stepw/2, getHeight() - steph);
             g.setColour(juce::Colours::white);
 
             g.drawText(juce::String(steps.entries[i]),
-                       juce::Rectangle<int>(1.0 + i * 25, 0.0, 24, 20.0),
+                       juce::Rectangle<int>(1.0 + i * stepw, 0.0, stepw, 20.0),
                        juce::Justification::centred);
         }
     }

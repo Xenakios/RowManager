@@ -21,7 +21,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     addAndMakeVisible(transposeSlider);
     // addAndMakeVisible(transformedRowComponent);
     addAndMakeVisible(rowEntryComponent);
-    rowEntryComponent.setNumActiveSteps(numrow_elements);
+    
     rowEntryComponent.readonly = false;
 
     octaveRowComponent.steps = processorRef.rowOctave;
