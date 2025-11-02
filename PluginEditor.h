@@ -62,6 +62,9 @@ class MultiStepComponent : public juce::Component
                 g.setColour(juce::Colours::green);
             float steph = juce::jmap<double>(steps[i], 0, numActiveSteps, getHeight() - 2.0, 0);
             g.fillRect((float)1.0 + i * 25, steph, 24.0, getHeight() - steph);
+            g.setColour(juce::Colours::white);
+            g.drawText(juce::String(steps[i]), juce::Rectangle<int>(1.0 + i * 25, 0.0, 24, 20.0),
+                       juce::Justification::centred);
         }
     }
     std::vector<int> steps;
