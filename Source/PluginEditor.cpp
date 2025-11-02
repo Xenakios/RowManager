@@ -12,7 +12,6 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     addAndMakeVisible(keyboardComponent);
     processorRef.keyboardState.addListener(this);
 
-    
     rowEntryComponent.steps = Row::make_chromatic(numrow_elements);
 
     transposeSlider.setNumDecimalPlacesToDisplay(0);
@@ -62,24 +61,22 @@ void AudioPluginAudioProcessorEditor::handleNoteOn(juce::MidiKeyboardState *sour
     }
 }
 
-void AudioPluginAudioProcessorEditor::updateRowSliders() {}
-
 void AudioPluginAudioProcessorEditor::doTransform()
 {
-    auto transformed = rowEntryComponent.steps.transform(
-        (int)transposeSlider.getValue(), invertButton.getToggleState(), reverseButton.getToggleState());
+    if (!rowEntryComponent.steps.isValid())
+        return;
+    auto transformed = rowEntryComponent.steps.transform((int)transposeSlider.getValue(),
+                                                         invertButton.getToggleState(),
+                                                         reverseButton.getToggleState());
     transformedRowComponent.steps = transformed;
     transformedRowComponent.repaint();
+    processorRef.setRow(transformedRowComponent.steps);
 }
 
 //==============================================================================
 void AudioPluginAudioProcessorEditor::paint(juce::Graphics &g)
 {
     g.fillAll(juce::Colours::darkgrey);
-    return;
-    g.setColour(juce::Colours::white);
-    g.setFont(15.0f);
-    g.drawFittedText("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
 }
 
 void AudioPluginAudioProcessorEditor::resized()

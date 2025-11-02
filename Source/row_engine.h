@@ -2,7 +2,6 @@
 
 #include <array>
 #include <cstdint>
-#include <set>
 
 class Row
 {

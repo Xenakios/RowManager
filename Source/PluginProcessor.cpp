@@ -1,5 +1,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "juce_audio_basics/juce_audio_basics.h"
+#include "juce_core/juce_core.h"
 
 //==============================================================================
 AudioPluginAudioProcessor::AudioPluginAudioProcessor()
@@ -12,6 +14,19 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 #endif
       )
 {
+    rowPitchClass = Row::make_chromatic(16);
+    rowOctave.entries = {2, 2, 2, 2};
+    rowOctave.num_active_entries = 4;
+    playingNotes.reserve(1024);
+}
+
+void AudioPluginAudioProcessor::setRow(Row r)
+{
+    juce::ScopedLock locker(cs);
+    rowPitchClass = r;
+    pitchClassCurStep = 0;
+    octaveCurStep = 0;
+    playpos = 0;
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor() {}
@@ -63,18 +78,9 @@ void AudioPluginAudioProcessor::changeProgramName(int index, const juce::String 
 }
 
 //==============================================================================
-void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
-{
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
-    juce::ignoreUnused(sampleRate, samplesPerBlock);
-}
+void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {}
 
-void AudioPluginAudioProcessor::releaseResources()
-{
-    // When playback stops, you can use this as an opportunity to free up any
-    // spare memory, etc.
-}
+void AudioPluginAudioProcessor::releaseResources() {}
 
 bool AudioPluginAudioProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const
 {
@@ -103,33 +109,69 @@ bool AudioPluginAudioProcessor::isBusesLayoutSupported(const BusesLayout &layout
 void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                                              juce::MidiBuffer &midiMessages)
 {
-    juce::ignoreUnused(midiMessages);
-    keyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(), true);
     juce::ScopedNoDenormals noDenormals;
+    juce::ScopedLock locker(cs);
+    generatedMessages.clear();
+    keyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(), true);
+    bool noteontriggered = false;
+    bool noteofftriggered = false;
+    for (const juce::MidiMessageMetadata metadata : midiMessages)
+    {
+        auto msg = metadata.getMessage();
+        if (msg.isNoteOn())
+        {
+            if (msg.getNoteNumber() == 48)
+            {
+                noteontriggered = true;
+            }
+        }
+        if (msg.isNoteOff())
+        {
+            if (msg.getNoteNumber() == 48)
+            {
+                noteofftriggered = true;
+            }
+        }
+    }
+    for (int i = 0; i < buffer.getNumSamples(); ++i)
+    {
+        if (playpos == 0)
+        {
+            noteontriggered = true;
+            noteofftriggered = true;
+        }
+        ++playpos;
+        if (playpos == pulselen)
+            playpos = 0;
+    }
+    if (noteofftriggered)
+    {
+        for (auto &e : playingNotes)
+        {
+            generatedMessages.addEvent(juce::MidiMessage::noteOff(1, std::get<1>(e), 1.0f), 0);
+        }
+        playingNotes.clear();
+    }
+    if (noteontriggered)
+    {
+        int octave = rowOctave.entries[octaveCurStep];
+        int note = 24 + octave * rowPitchClass.num_active_entries +
+                   rowPitchClass.entries[pitchClassCurStep];
+        ++pitchClassCurStep;
+        if (pitchClassCurStep == rowPitchClass.num_active_entries)
+            pitchClassCurStep = 0;
+        ++octaveCurStep;
+        if (octaveCurStep == rowOctave.num_active_entries)
+            octaveCurStep = 0;
+        generatedMessages.addEvent(juce::MidiMessage::noteOn(1, note, 1.0f), 0);
+        playingNotes.push_back({1, note});
+    }
+    midiMessages.swapWith(generatedMessages);
     auto totalNumInputChannels = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
-
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        auto *channelData = buffer.getWritePointer(channel);
-        juce::ignoreUnused(channelData);
-        // ..do something to the data...
-    }
 }
 
 //==============================================================================

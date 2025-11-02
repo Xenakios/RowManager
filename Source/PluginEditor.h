@@ -99,14 +99,14 @@ class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor,
 
   private:
     AudioPluginAudioProcessor &processorRef;
-    size_t numrow_elements = 32;
+    size_t numrow_elements = 16;
     juce::Slider transposeSlider;
     MultiStepComponent rowEntryComponent;
     MultiStepComponent transformedRowComponent;
 
     juce::ToggleButton invertButton;
     juce::ToggleButton reverseButton;
-    void updateRowSliders();
+    
     void doTransform();
     bool rowValid = false;
     juce::MidiKeyboardComponent keyboardComponent;

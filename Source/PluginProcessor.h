@@ -2,7 +2,9 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <span>
-
+#include "juce_audio_basics/juce_audio_basics.h"
+#include "juce_core/juce_core.h"
+#include "row_engine.h"
 
 //==============================================================================
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
@@ -43,8 +45,17 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     //==============================================================================
     void getStateInformation(juce::MemoryBlock &destData) override;
     void setStateInformation(const void *data, int sizeInBytes) override;
-
+    Row rowPitchClass;
+    int pitchClassCurStep = 0;
+    Row rowOctave;
+    int octaveCurStep = 0;
+    void setRow(Row r);
     juce::MidiKeyboardState keyboardState;
+    juce::CriticalSection cs;
+    std::vector<std::tuple<int, int>> playingNotes;
+    juce::MidiBuffer generatedMessages;
+    int playpos = 0;
+    int pulselen = 11025;
   private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessor)
