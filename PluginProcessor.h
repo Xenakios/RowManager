@@ -6,7 +6,7 @@ class RowEngine
 {
   public:
     RowEngine() {}
-    bool validate_row(std::vector<int> &row)
+    static bool validate_row(std::vector<int> &row)
     {
         std::set<int> seen;
         for (auto &e : row)
@@ -17,12 +17,24 @@ class RowEngine
         }
         return true;
     }
-    void transpose_row(std::vector<int> &row, int transpose)
+    static std::vector<int> transpose_row(std::vector<int> &row, int transpose)
     {
+        std::vector<int> result;
         for (auto &e : row)
         {
-            e = (e + transpose) % row.size();
+            result.push_back((e + transpose) % row.size());
         }
+        return result;
+    }
+    static std::vector<int> invert_row(std::vector<int> &row)
+    {
+        //x = (len(row) - x) % len(row)
+        std::vector<int> result;
+        for (auto &e : row)
+        {
+            result.push_back((row.size()-e) % row.size());
+        }
+        return result;
     }
 };
 
