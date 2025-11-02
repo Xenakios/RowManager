@@ -19,14 +19,7 @@ AudioPluginAudioProcessor::~AudioPluginAudioProcessor() {}
 //==============================================================================
 const juce::String AudioPluginAudioProcessor::getName() const { return JucePlugin_Name; }
 
-bool AudioPluginAudioProcessor::acceptsMidi() const
-{
-#if JucePlugin_WantsMidiInput
-    return true;
-#else
-    return false;
-#endif
-}
+bool AudioPluginAudioProcessor::acceptsMidi() const { return true; }
 
 bool AudioPluginAudioProcessor::producesMidi() const
 {
@@ -111,7 +104,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                                              juce::MidiBuffer &midiMessages)
 {
     juce::ignoreUnused(midiMessages);
-
+    keyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(), true);
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
