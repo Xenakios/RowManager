@@ -1,15 +1,19 @@
 #include "PluginProcessor.h"
+#include "juce_audio_utils/juce_audio_utils.h"
 #include "juce_events/juce_events.h"
 #include "juce_graphics/juce_graphics.h"
 #include "PluginEditor.h"
 
 //==============================================================================
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudioProcessor &p)
-    : AudioProcessorEditor(&p), processorRef(p)
+    : AudioProcessorEditor(&p), processorRef(p),
+      keyboardComponent(processorRef.keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     juce::ignoreUnused(processorRef);
-    // Make sure that before the constructor has finished, you've set the
-    // editor's size to whatever you need it to be.
+
+    addAndMakeVisible(keyboardComponent);
+    processorRef.keyboardState.addListener(this);
+
     candidateRow.resize(numrow_elements);
     for (int i = 0; i < numrow_elements; ++i)
         candidateRow[i] = i;
@@ -22,7 +26,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     addAndMakeVisible(rowEntryComponent);
     rowEntryComponent.setNumActiveSteps(numrow_elements);
     rowEntryComponent.readonly = false;
-    
+
     transformedRowComponent.setNumActiveSteps(numrow_elements);
     transformedRowComponent.steps = rowEntryComponent.steps;
 
@@ -39,14 +43,35 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     setSize(700, 550);
 }
 
-AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor() {}
+AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
+{
+    processorRef.keyboardState.removeListener(this);
+}
+
+void AudioPluginAudioProcessorEditor::handleNoteOn(juce::MidiKeyboardState *source, int midiChannel,
+                                                   int midiNoteNumber, float velocity)
+{
+    if (midiNoteNumber >= 60 && midiNoteNumber < 76)
+    {
+        transposeSlider.setValue(midiNoteNumber - 60);
+    }
+    if (midiNoteNumber == 58)
+    {
+        invertButton.triggerClick();
+    }
+    if (midiNoteNumber == 59)
+    {
+        reverseButton.triggerClick();
+    }
+}
 
 void AudioPluginAudioProcessorEditor::updateRowSliders() {}
 
 void AudioPluginAudioProcessorEditor::doTransform()
 {
-    transformedRowComponent.steps = RowEngine::transform_row(
-        rowEntryComponent.steps, transposeSlider.getValue(), invertButton.getToggleState(), reverseButton.getToggleState());
+    transformedRowComponent.steps =
+        RowEngine::transform_row(rowEntryComponent.steps, transposeSlider.getValue(),
+                                 invertButton.getToggleState(), reverseButton.getToggleState());
     transformedRowComponent.repaint();
 }
 
@@ -76,5 +101,6 @@ void AudioPluginAudioProcessorEditor::resized()
     transposeSlider.setBounds(1, rowEntryComponent.getBottom() + 1, getWidth() - 2, 25);
     invertButton.setBounds(1, transposeSlider.getBottom(), 80, 24);
     reverseButton.setBounds(invertButton.getRight() + 2, transposeSlider.getBottom(), 80, 24);
+    keyboardComponent.setBounds(1, reverseButton.getBottom(), getWidth() - 2, 50);
     transformedRowComponent.setBounds(1, getBottom() - 150, getWidth() - 2, 149);
 }

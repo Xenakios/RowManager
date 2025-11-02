@@ -1,6 +1,8 @@
 #pragma once
 
 #include "PluginProcessor.h"
+#include "juce_audio_basics/juce_audio_basics.h"
+#include "juce_audio_utils/juce_audio_utils.h"
 #include "juce_core/juce_core.h"
 #include "juce_graphics/juce_graphics.h"
 #include "juce_gui_basics/juce_gui_basics.h"
@@ -75,12 +77,19 @@ class MultiStepComponent : public juce::Component
 };
 
 //==============================================================================
-class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor
+class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor,
+                                              public juce::MidiKeyboardStateListener
 {
   public:
     explicit AudioPluginAudioProcessorEditor(AudioPluginAudioProcessor &);
     ~AudioPluginAudioProcessorEditor() override;
+    void handleNoteOn(juce::MidiKeyboardState *source, int midiChannel, int midiNoteNumber,
+                      float velocity) override;
 
+    void handleNoteOff(juce::MidiKeyboardState *source, int midiChannel, int midiNoteNumber,
+                       float velocity) override
+    {
+    }
     //==============================================================================
     void paint(juce::Graphics &) override;
     void resized() override;
@@ -100,5 +109,6 @@ class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor
     void updateRowSliders();
     void doTransform();
     bool rowValid = false;
+    juce::MidiKeyboardComponent keyboardComponent;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessorEditor)
 };
