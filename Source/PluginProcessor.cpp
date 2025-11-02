@@ -16,13 +16,33 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 {
     rowPitchClass = Row::make_chromatic(16);
     pitchClassIterator = Row::Iterator(rowPitchClass);
-    rowOctave.entries = {3, 2, 1, 0};
-    rowOctave.num_active_entries = 4;
-    octaveIterator = Row::Iterator(rowOctave);
-    rowVelocity.entries = {2, 3, 0, 1};
-    rowVelocity.num_active_entries = 4;
-    velocityIterator = Row::Iterator(rowVelocity);
+    
+    rowPrimeOctave.entries = {3, 2, 1, 0};
+    rowPrimeOctave.num_active_entries = 4;
+    rowTransformedOctave = rowPrimeOctave;
+    octaveIterator = Row::Iterator(rowTransformedOctave);
+    
+    rowPrimeVelocity.entries = {2, 3, 0, 1};
+    rowPrimeVelocity.num_active_entries = 4;
+    rowTransformedVelocity = rowPrimeVelocity;
+    velocityIterator = Row::Iterator(rowTransformedVelocity);
+    
     playingNotes.reserve(1024);
+}
+
+void AudioPluginAudioProcessor::transformRow(int whichRow, int transpose, bool invert, bool reverse)
+{
+    juce::ScopedLock locker(cs);
+    if (whichRow == 1)
+    {
+        rowTransformedVelocity = rowPrimeVelocity.transform(transpose, invert, reverse);
+        velocityIterator = Row::Iterator(rowTransformedVelocity);
+    }
+    if (whichRow == 2)
+    {
+        rowTransformedOctave = rowPrimeOctave.transform(transpose, invert, reverse);
+        octaveIterator = Row::Iterator(rowTransformedOctave);
+    }
 }
 
 void AudioPluginAudioProcessor::setRow(Row r)
@@ -161,7 +181,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         int octave = octaveIterator.next();
         int note = 24 + octave * rowPitchClass.num_active_entries + pitchClassIterator.next();
         float velo = juce::jmap<float>(velocityIterator.next(), 0,
-                                       rowVelocity.num_active_entries - 1, 0.25, 1.0);
+                                       rowTransformedVelocity.num_active_entries - 1, 0.25, 1.0);
         generatedMessages.addEvent(juce::MidiMessage::noteOn(1, note, velo), 0);
         playingNotes.push_back({1, note});
     }

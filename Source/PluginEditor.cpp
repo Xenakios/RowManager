@@ -2,6 +2,7 @@
 #include "juce_audio_utils/juce_audio_utils.h"
 #include "juce_events/juce_events.h"
 #include "juce_graphics/juce_graphics.h"
+#include "juce_gui_basics/juce_gui_basics.h"
 #include "PluginEditor.h"
 
 //==============================================================================
@@ -34,9 +35,32 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     reverseButton.onClick = [this]() { doTransform(); };
     addAndMakeVisible(reverseButton);
 
+    addAndMakeVisible(velocityMenuButton);
+    velocityMenuButton.setButtonText("Velo...");
+    velocityMenuButton.onClick = [this]() { showMenuForRow(1); };
+
+    addAndMakeVisible(octaveMenuButton);
+    octaveMenuButton.setButtonText("Octave...");
+    octaveMenuButton.onClick = [this]() { showMenuForRow(2); };
+
     rowEntryComponent.OnEdited = [this]() { doTransform(); };
 
     setSize(810, 550);
+}
+
+void AudioPluginAudioProcessorEditor::showMenuForRow(int which)
+{
+    juce::PopupMenu menu;
+    for (int i = 0; i < processorRef.rowPrimeVelocity.num_active_entries; ++i)
+    {
+        menu.addItem("Prime " + juce::String(i),
+                     [this, i, which]() { processorRef.transformRow(which, i, false, false); });
+
+        menu.addItem("Retrograde " + juce::String(i),
+                     [this, i, which]() { processorRef.transformRow(which, i, false, true); });
+    }
+
+    menu.showMenuAsync(juce::PopupMenu::Options{});
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
@@ -58,6 +82,10 @@ void AudioPluginAudioProcessorEditor::handleNoteOn(juce::MidiKeyboardState *sour
     if (midiNoteNumber == 59)
     {
         reverseButton.triggerClick();
+    }
+    if (midiNoteNumber == 57)
+    {
+        // processorRef.transformVelocityRow(0, bool invert, bool reverse)
     }
 }
 
@@ -85,6 +113,9 @@ void AudioPluginAudioProcessorEditor::resized()
     transposeSlider.setBounds(1, rowEntryComponent.getBottom() + 1, getWidth() - 2, 25);
     invertButton.setBounds(1, transposeSlider.getBottom(), 80, 24);
     reverseButton.setBounds(invertButton.getRight() + 2, transposeSlider.getBottom(), 80, 24);
+    velocityMenuButton.setBounds(reverseButton.getRight() + 2, transposeSlider.getBottom(), 80, 24);
+    octaveMenuButton.setBounds(velocityMenuButton.getRight() + 2, transposeSlider.getBottom(), 80,
+                               24);
     keyboardComponent.setBounds(1, reverseButton.getBottom(), getWidth() - 2, 50);
     transformedRowComponent.setBounds(1, getBottom() - 150, getWidth() - 2, 149);
 }

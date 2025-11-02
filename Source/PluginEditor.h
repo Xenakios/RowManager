@@ -106,8 +106,10 @@ class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor,
 
     juce::ToggleButton invertButton;
     juce::ToggleButton reverseButton;
-    
+    juce::TextButton velocityMenuButton;
+    juce::TextButton octaveMenuButton;
     void doTransform();
+    void showMenuForRow(int which);
     bool rowValid = false;
     juce::MidiKeyboardComponent keyboardComponent;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessorEditor)
