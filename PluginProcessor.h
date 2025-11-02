@@ -17,25 +17,23 @@ class RowEngine
         }
         return true;
     }
-    static std::vector<int> transpose_row(std::vector<int> &row, int transpose)
+    
+    static std::vector<int> transform_row(const std::vector<int> &row, int transpose, bool inverted,
+                                          bool reversed)
     {
         std::vector<int> result;
         for (auto &e : row)
         {
-            result.push_back((e + transpose) % row.size());
+            int elem = (e + transpose) % row.size();
+            if (inverted)
+                elem = (row.size() - elem) % row.size();
+            result.push_back(elem);
         }
+        if (reversed)
+            std::reverse(result.begin(), result.end());
         return result;
     }
-    static std::vector<int> invert_row(std::vector<int> &row)
-    {
-        //x = (len(row) - x) % len(row)
-        std::vector<int> result;
-        for (auto &e : row)
-        {
-            result.push_back((row.size()-e) % row.size());
-        }
-        return result;
-    }
+    
 };
 
 //==============================================================================

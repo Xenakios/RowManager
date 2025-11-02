@@ -9,9 +9,13 @@ class MultiStepComponent : public juce::Component
 {
   public:
     MultiStepComponent() { steps.resize(16); }
+    bool readonly = true;
+    std::function<void()> OnEdited = nullptr;
     void setNumActiveSteps(int numsteps) { numActiveSteps = numsteps; }
     void mouseDown(const juce::MouseEvent &ev) override
     {
+        if (readonly)
+            return;
         int index = (float)ev.x / 25.0;
         DBG(index);
         if (index >= 0 && index < numActiveSteps)
@@ -29,6 +33,8 @@ class MultiStepComponent : public juce::Component
     }
     void mouseDrag(const juce::MouseEvent &ev) override
     {
+        if (readonly)
+            return;
         if (draggingIndex >= 0)
         {
             float deltay = dragystart - ev.y;
@@ -38,6 +44,8 @@ class MultiStepComponent : public juce::Component
             steps[draggingIndex] = juce::jlimit<int>(0, numActiveSteps - 1, steps[draggingIndex]);
             DBG(deltay);
             repaint();
+            if (OnEdited)
+                OnEdited();
         }
     }
     void paint(juce::Graphics &g) override
@@ -85,7 +93,9 @@ class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor
     MultiStepComponent transformedRowComponent;
     std::vector<int> candidateRow;
     juce::ToggleButton invertButton;
+    juce::ToggleButton reverseButton;
     void updateRowSliders();
+    void doTransform();
     bool rowValid = false;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessorEditor)
 };
