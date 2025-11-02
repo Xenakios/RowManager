@@ -16,17 +16,15 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 {
     rowPitchClass = Row::make_chromatic(16);
     pitchClassIterator = Row::Iterator(rowPitchClass);
-    
-    rowPrimeOctave.entries = {3, 2, 1, 0};
-    rowPrimeOctave.num_active_entries = 4;
-    rowTransformedOctave = rowPrimeOctave;
-    octaveIterator = Row::Iterator(rowTransformedOctave);
-    
-    rowPrimeVelocity.entries = {2, 3, 0, 1};
-    rowPrimeVelocity.num_active_entries = 4;
-    rowTransformedVelocity = rowPrimeVelocity;
-    velocityIterator = Row::Iterator(rowTransformedVelocity);
-    
+
+    rowOctave.entries = {3, 2, 1, 0};
+    rowOctave.num_active_entries = 4;
+    octaveIterator = Row::Iterator(rowOctave, true);
+
+    rowVelocity.entries = {2, 3, 0, 1};
+    rowVelocity.num_active_entries = 4;
+    velocityIterator = Row::Iterator(rowVelocity, true);
+
     playingNotes.reserve(1024);
 }
 
@@ -35,13 +33,11 @@ void AudioPluginAudioProcessor::transformRow(int whichRow, int transpose, bool i
     juce::ScopedLock locker(cs);
     if (whichRow == 1)
     {
-        rowTransformedVelocity = rowPrimeVelocity.transform(transpose, invert, reverse);
-        velocityIterator = Row::Iterator(rowTransformedVelocity);
+        rowVelocity.setTransform(transpose, invert, reverse);
     }
     if (whichRow == 2)
     {
-        rowTransformedOctave = rowPrimeOctave.transform(transpose, invert, reverse);
-        octaveIterator = Row::Iterator(rowTransformedOctave);
+        rowOctave.setTransform(transpose, invert, reverse);
     }
 }
 
@@ -49,8 +45,10 @@ void AudioPluginAudioProcessor::setRow(Row r)
 {
     juce::ScopedLock locker(cs);
     rowPitchClass = r;
+    auto oldpos = pitchClassIterator.pos;
     pitchClassIterator = Row::Iterator(rowPitchClass);
-    playpos = 0;
+    pitchClassIterator.pos = oldpos;
+    // playpos = 0;
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor() {}
@@ -181,7 +179,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         int octave = octaveIterator.next();
         int note = 24 + octave * rowPitchClass.num_active_entries + pitchClassIterator.next();
         float velo = juce::jmap<float>(velocityIterator.next(), 0,
-                                       rowTransformedVelocity.num_active_entries - 1, 0.25, 1.0);
+                                       rowVelocity.num_active_entries - 1, 0.25, 1.0);
         generatedMessages.addEvent(juce::MidiMessage::noteOn(1, note, velo), 0);
         playingNotes.push_back({1, note});
     }

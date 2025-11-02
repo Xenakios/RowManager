@@ -47,15 +47,13 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     void setStateInformation(const void *data, int sizeInBytes) override;
     Row rowPitchClass;
     Row::Iterator pitchClassIterator;
-    
-    Row rowPrimeOctave;
-    Row rowTransformedOctave;
+
+    Row rowOctave;
     Row::Iterator octaveIterator;
-    
-    Row rowPrimeVelocity;
-    Row rowTransformedVelocity;
+
+    Row rowVelocity;
     Row::Iterator velocityIterator;
-    
+
     void transformRow(int whichRow, int transpose, bool invert, bool reverse);
 
     void setRow(Row r);
@@ -65,6 +63,7 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     juce::MidiBuffer generatedMessages;
     int playpos = 0;
     int pulselen = 11025;
+
   private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessor)

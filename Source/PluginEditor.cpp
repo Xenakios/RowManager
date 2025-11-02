@@ -45,21 +45,37 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
 
     rowEntryComponent.OnEdited = [this]() { doTransform(); };
 
-    setSize(810, 550);
+    setSize(810, 450);
 }
 
 void AudioPluginAudioProcessorEditor::showMenuForRow(int which)
 {
     juce::PopupMenu menu;
-    for (int i = 0; i < processorRef.rowPrimeVelocity.num_active_entries; ++i)
+    int rowsize = 0;
+    if (which == 1)
+        rowsize = 4;
+    if (which == 2)
+        rowsize = 4;
+    for (int i = 0; i < rowsize; ++i)
     {
         menu.addItem("Prime " + juce::String(i),
                      [this, i, which]() { processorRef.transformRow(which, i, false, false); });
-
+    }
+    for (int i = 0; i < rowsize; ++i)
+    {
         menu.addItem("Retrograde " + juce::String(i),
                      [this, i, which]() { processorRef.transformRow(which, i, false, true); });
     }
-
+    for (int i = 0; i < rowsize; ++i)
+    {
+        menu.addItem("Inversion " + juce::String(i),
+                     [this, i, which]() { processorRef.transformRow(which, i, true, false); });
+    }
+    for (int i = 0; i < rowsize; ++i)
+    {
+        menu.addItem("Retrograde Inversion " + juce::String(i),
+                     [this, i, which]() { processorRef.transformRow(which, i, true, true); });
+    }
     menu.showMenuAsync(juce::PopupMenu::Options{});
 }
 
