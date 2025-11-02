@@ -76,9 +76,9 @@ class MultiStepComponent : public juce::Component
                                              getHeight() - 2.0, 0);
             g.fillRect((float)1.0 + i * stepw, steph, stepw / 2.0, getHeight() - steph);
             if (i == playingstep)
-                g.setColour(juce::Colours::cyan);
+                g.setColour(juce::Colours::grey);
             else
-                g.setColour(juce::Colours::cyan.darker());
+                g.setColour(juce::Colours::darkgrey);
             steph = juce::jmap<double>(steps.transformed_entries[i], 0, steps.num_active_entries,
                                        getHeight() - 2.0, 0);
             g.fillRect((float)1.0 + i * stepw + stepw/2, steph, stepw/2, getHeight() - steph);
