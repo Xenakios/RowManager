@@ -17,6 +17,8 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     rowPitchClass = Row::make_chromatic(16);
     rowOctave.entries = {2, 2, 2, 2};
     rowOctave.num_active_entries = 4;
+    rowVelocity.entries = {2, 3, 0, 1};
+    rowVelocity.num_active_entries = 4;
     playingNotes.reserve(1024);
 }
 
@@ -26,6 +28,7 @@ void AudioPluginAudioProcessor::setRow(Row r)
     rowPitchClass = r;
     pitchClassCurStep = 0;
     octaveCurStep = 0;
+    velocityCurStep = 0;
     playpos = 0;
 }
 
@@ -157,13 +160,18 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         int octave = rowOctave.entries[octaveCurStep];
         int note = 24 + octave * rowPitchClass.num_active_entries +
                    rowPitchClass.entries[pitchClassCurStep];
+        float velo = juce::jmap<float>(rowVelocity.entries[velocityCurStep], 0,
+                                       rowVelocity.num_active_entries - 1, 0.25, 1.0);
         ++pitchClassCurStep;
         if (pitchClassCurStep == rowPitchClass.num_active_entries)
             pitchClassCurStep = 0;
         ++octaveCurStep;
         if (octaveCurStep == rowOctave.num_active_entries)
             octaveCurStep = 0;
-        generatedMessages.addEvent(juce::MidiMessage::noteOn(1, note, 1.0f), 0);
+        ++velocityCurStep;
+        if (velocityCurStep == rowVelocity.num_active_entries)
+            velocityCurStep = 0;
+        generatedMessages.addEvent(juce::MidiMessage::noteOn(1, note, velo), 0);
         playingNotes.push_back({1, note});
     }
     midiMessages.swapWith(generatedMessages);

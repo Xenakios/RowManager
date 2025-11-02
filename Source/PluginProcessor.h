@@ -49,6 +49,8 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     int pitchClassCurStep = 0;
     Row rowOctave;
     int octaveCurStep = 0;
+    Row rowVelocity;
+    int velocityCurStep = 0;
     void setRow(Row r);
     juce::MidiKeyboardState keyboardState;
     juce::CriticalSection cs;
