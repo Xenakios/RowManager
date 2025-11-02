@@ -9,15 +9,12 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     : AudioProcessorEditor(&p), processorRef(p),
       keyboardComponent(processorRef.keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
 {
-    juce::ignoreUnused(processorRef);
-
     addAndMakeVisible(keyboardComponent);
     processorRef.keyboardState.addListener(this);
 
-    candidateRow.resize(numrow_elements);
-    for (int i = 0; i < numrow_elements; ++i)
-        candidateRow[i] = i;
-    rowEntryComponent.steps = candidateRow;
+    
+    rowEntryComponent.steps = Row::make_chromatic(numrow_elements);
+
     transposeSlider.setNumDecimalPlacesToDisplay(0);
     transposeSlider.setRange(0, numrow_elements - 1, 1);
     transposeSlider.onValueChange = [this]() { doTransform(); };
@@ -40,7 +37,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
 
     rowEntryComponent.OnEdited = [this]() { doTransform(); };
 
-    setSize(700, 550);
+    setSize(810, 550);
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
@@ -69,20 +66,10 @@ void AudioPluginAudioProcessorEditor::updateRowSliders() {}
 
 void AudioPluginAudioProcessorEditor::doTransform()
 {
-    transformedRowComponent.steps =
-        RowEngine::transform_row(rowEntryComponent.steps, transposeSlider.getValue(),
-                                 invertButton.getToggleState(), reverseButton.getToggleState());
+    auto transformed = rowEntryComponent.steps.transform(
+        (int)transposeSlider.getValue(), invertButton.getToggleState(), reverseButton.getToggleState());
+    transformedRowComponent.steps = transformed;
     transformedRowComponent.repaint();
-}
-
-void AudioPluginAudioProcessorEditor::updateAndValidateRow()
-{
-    for (int i = 0; i < numrow_elements; ++i)
-    {
-        candidateRow[i] = rowEntryComponent.steps[i];
-    }
-    rowValid = processorRef.reng.validate_row(candidateRow);
-    repaint();
 }
 
 //==============================================================================

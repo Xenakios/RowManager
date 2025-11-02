@@ -1,40 +1,8 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
+#include <span>
 
-class RowEngine
-{
-  public:
-    RowEngine() {}
-    static bool validate_row(std::vector<int> &row)
-    {
-        std::set<int> seen;
-        for (auto &e : row)
-        {
-            if (seen.count(e))
-                return false;
-            seen.insert(e);
-        }
-        return true;
-    }
-    
-    static std::vector<int> transform_row(const std::vector<int> &row, int transpose, bool inverted,
-                                          bool reversed)
-    {
-        std::vector<int> result;
-        for (auto &e : row)
-        {
-            int elem = (e + transpose) % row.size();
-            if (inverted)
-                elem = (row.size() - elem) % row.size();
-            result.push_back(elem);
-        }
-        if (reversed)
-            std::reverse(result.begin(), result.end());
-        return result;
-    }
-    
-};
 
 //==============================================================================
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
@@ -76,7 +44,6 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     void getStateInformation(juce::MemoryBlock &destData) override;
     void setStateInformation(const void *data, int sizeInBytes) override;
 
-    RowEngine reng;
     juce::MidiKeyboardState keyboardState;
   private:
     //==============================================================================

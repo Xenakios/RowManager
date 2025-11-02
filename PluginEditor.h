@@ -6,25 +6,25 @@
 #include "juce_core/juce_core.h"
 #include "juce_graphics/juce_graphics.h"
 #include "juce_gui_basics/juce_gui_basics.h"
+#include "row_engine.h"
 
 class MultiStepComponent : public juce::Component
 {
   public:
-    MultiStepComponent() { steps.resize(16); }
+    MultiStepComponent() {}
     bool readonly = true;
     std::function<void()> OnEdited = nullptr;
-    void setNumActiveSteps(int numsteps) { numActiveSteps = numsteps; }
+    void setNumActiveSteps(size_t numsteps) { steps.num_active_entries; }
     void mouseDown(const juce::MouseEvent &ev) override
     {
         if (readonly)
             return;
         int index = (float)ev.x / 25.0;
         DBG(index);
-        if (index >= 0 && index < numActiveSteps)
+        if (index >= 0 && index < steps.num_active_entries)
         {
             draggingIndex = index;
             dragystart = ev.y;
-            stepstart = steps[index];
         }
         repaint();
     }
@@ -40,10 +40,11 @@ class MultiStepComponent : public juce::Component
         if (draggingIndex >= 0)
         {
             float deltay = dragystart - ev.y;
-            steps[draggingIndex] += deltay * 0.1;
-            steps[draggingIndex] =
-                juce::jmap<double>(ev.y, 0.0, getHeight(), numActiveSteps - 1, 0);
-            steps[draggingIndex] = juce::jlimit<int>(0, numActiveSteps - 1, steps[draggingIndex]);
+            // steps[draggingIndex] += deltay * 0.1;
+            steps.entries[draggingIndex] =
+                juce::jmap<double>(ev.y, 0.0, getHeight(), steps.num_active_entries - 1, 0);
+            steps.entries[draggingIndex] =
+                juce::jlimit<int>(0, steps.num_active_entries - 1, steps.entries[draggingIndex]);
             DBG(deltay);
             repaint();
             if (OnEdited)
@@ -52,25 +53,27 @@ class MultiStepComponent : public juce::Component
     }
     void paint(juce::Graphics &g) override
     {
-        if (RowEngine::validate_row(steps))
+        if (steps.isValid())
             g.fillAll(juce::Colours::black);
         else
-            g.fillAll(juce::Colours::red.brighter());
-        for (int i = 0; i < numActiveSteps; ++i)
+            g.fillAll(juce::Colours::red.darker());
+        for (size_t i = 0; i < steps.num_active_entries; ++i)
         {
             if (i == draggingIndex)
                 g.setColour(juce::Colours::yellow);
             else
                 g.setColour(juce::Colours::green);
-            float steph = juce::jmap<double>(steps[i], 0, numActiveSteps, getHeight() - 2.0, 0);
+            float steph = juce::jmap<double>(steps.entries[i], 0, steps.num_active_entries, getHeight() - 2.0, 0);
             g.fillRect((float)1.0 + i * 25, steph, 24.0, getHeight() - steph);
             g.setColour(juce::Colours::white);
-            g.drawText(juce::String(steps[i]), juce::Rectangle<int>(1.0 + i * 25, 0.0, 24, 20.0),
+            g.drawText(juce::String(steps.entries[i]), juce::Rectangle<int>(1.0 + i * 25, 0.0, 24, 20.0),
                        juce::Justification::centred);
         }
     }
-    std::vector<int> steps;
-    int numActiveSteps = 0;
+
+    Row steps;
+
+  private:
     int draggingIndex = -1;
     int dragystart = 0;
     int stepstart = 0;
@@ -93,17 +96,14 @@ class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor,
     //==============================================================================
     void paint(juce::Graphics &) override;
     void resized() override;
-    void updateAndValidateRow();
 
   private:
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
     AudioPluginAudioProcessor &processorRef;
-    int numrow_elements = 16;
+    size_t numrow_elements = 32;
     juce::Slider transposeSlider;
     MultiStepComponent rowEntryComponent;
     MultiStepComponent transformedRowComponent;
-    std::vector<int> candidateRow;
+
     juce::ToggleButton invertButton;
     juce::ToggleButton reverseButton;
     void updateRowSliders();
