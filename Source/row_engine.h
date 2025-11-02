@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cassert>
 #include <cstdint>
 
 class Row
@@ -50,4 +51,21 @@ class Row
         }
         return true;
     }
+    class Iterator
+    {
+      public:
+        Iterator() = default;
+        Iterator(Row &r) : row(&r) {}
+        uint16_t next()
+        {
+            assert(row);
+            uint16_t result = row->entries[pos];
+            ++pos;
+            if (pos == row->num_active_entries)
+                pos = 0;
+            return result;
+        }
+        Row *row = nullptr;
+        size_t pos = 0;
+    };
 };

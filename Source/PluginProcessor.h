@@ -46,11 +46,12 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     void getStateInformation(juce::MemoryBlock &destData) override;
     void setStateInformation(const void *data, int sizeInBytes) override;
     Row rowPitchClass;
-    int pitchClassCurStep = 0;
+    Row::Iterator pitchClassIterator;
     Row rowOctave;
-    int octaveCurStep = 0;
+    Row::Iterator octaveIterator;
     Row rowVelocity;
-    int velocityCurStep = 0;
+    Row::Iterator velocityIterator;
+    
     void setRow(Row r);
     juce::MidiKeyboardState keyboardState;
     juce::CriticalSection cs;
