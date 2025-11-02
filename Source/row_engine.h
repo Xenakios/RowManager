@@ -38,12 +38,14 @@ class Row
     }
     bool isValid() const
     {
+        if (num_active_entries == 0)
+            return false;
         std::array<bool, maxElements> seen;
         std::fill(seen.begin(), seen.end(), false);
         for (size_t i = 0; i < num_active_entries; ++i)
         {
             auto &e = entries[i];
-            if (seen[e])
+            if (seen[e] || e >= num_active_entries)
                 return false;
             seen[e] = true;
         }
