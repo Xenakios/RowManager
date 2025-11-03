@@ -2,6 +2,7 @@
 #include "PluginEditor.h"
 #include "juce_audio_basics/juce_audio_basics.h"
 #include "juce_core/juce_core.h"
+#include "row_engine.h"
 
 //==============================================================================
 AudioPluginAudioProcessor::AudioPluginAudioProcessor()
@@ -21,7 +22,8 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
         rows[RID_PITCHCLASS].entries[i] = (i * 7) % 12;
     rows[RID_OCTAVE] = Row::make_from_init_list({3, 2, 1, 0});
     rows[RID_VELOCITY] = Row::make_from_init_list({2, 3, 0, 1});
-    for (size_t i = 0; i < 3; ++i)
+    rows[RID_POLYAT] = Row::make_from_init_list({2, 3, 0, 1, 5, 4});
+    for (size_t i = 0; i < 4; ++i)
     {
         rowIterators[i] = Row::Iterator(rows[i], true);
     }
@@ -181,6 +183,8 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         msg.pitchclassplaypos = rowIterators[RID_PITCHCLASS].pos;
         msg.octaveplaypos = rowIterators[RID_OCTAVE].pos;
         msg.velocityplaypos = rowIterators[RID_VELOCITY].pos;
+        msg.polyatplaypos = rowIterators[RID_POLYAT].pos;
+        int polyat = rowIterators[RID_POLYAT].next();
         int octave = rowIterators[RID_OCTAVE].next();
         int note = 24 + octave * rows[RID_PITCHCLASS].num_active_entries +
                    rowIterators[RID_PITCHCLASS].next();

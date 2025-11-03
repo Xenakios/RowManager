@@ -14,16 +14,10 @@ struct MessageToUI
     int soundingpitch = 0;
     int octaveplaypos = 0;
     int velocityplaypos = 0;
+    int polyatplaypos = 0;
 };
 
-enum RowID
-{
-    RID_PITCHCLASS,
-    RID_VELOCITY,
-    RID_OCTAVE,
-    RID_POLYAT,
-    RID_LAST
-};
+using namespace xenakios;
 
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
 {
@@ -63,8 +57,8 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     //==============================================================================
     void getStateInformation(juce::MemoryBlock &destData) override;
     void setStateInformation(const void *data, int sizeInBytes) override;
-    std::array<Row, 3> rows;
-    std::array<Row::Iterator, 3> rowIterators;
+    std::array<Row, 4> rows;
+    std::array<Row::Iterator, 4> rowIterators;
     
     void transformRow(size_t whichRow, int transpose, bool invert, bool reverse);
 

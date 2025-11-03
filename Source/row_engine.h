@@ -4,6 +4,17 @@
 #include <cassert>
 #include <cstdint>
 #include <initializer_list>
+namespace xenakios
+{
+
+enum RowID
+{
+    RID_PITCHCLASS,
+    RID_VELOCITY,
+    RID_OCTAVE,
+    RID_POLYAT,
+    RID_LAST
+};
 
 class Row
 {
@@ -117,3 +128,4 @@ class Row
         bool it_transformed = false;
     };
 };
+} // namespace xenakios

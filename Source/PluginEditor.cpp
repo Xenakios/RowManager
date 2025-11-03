@@ -21,7 +21,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
 
     rowComponents.push_back(
         std::make_unique<RowComponent>("Velocity", RID_VELOCITY, processorRef.rows[RID_VELOCITY]));
-
+    rowComponents.push_back(
+        std::make_unique<RowComponent>("PolyAT", RID_POLYAT, processorRef.rows[RID_POLYAT]));
     for (size_t i = 0; i < rowComponents.size(); ++i)
     {
         addAndMakeVisible(rowComponents[i].get());
@@ -33,7 +34,6 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     startTimer(100);
 }
 
-
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 {
     processorRef.keyboardState.removeListener(this);
@@ -42,7 +42,6 @@ AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 void AudioPluginAudioProcessorEditor::handleNoteOn(juce::MidiKeyboardState *source, int midiChannel,
                                                    int midiNoteNumber, float velocity)
 {
-    
 }
 
 void AudioPluginAudioProcessorEditor::timerCallback()
@@ -55,26 +54,17 @@ void AudioPluginAudioProcessorEditor::timerCallback()
             rowComponents[RID_PITCHCLASS]->stepComponent.setPlayingStep(msg.pitchclassplaypos);
             rowComponents[RID_OCTAVE]->stepComponent.setPlayingStep(msg.octaveplaypos);
             rowComponents[RID_VELOCITY]->stepComponent.setPlayingStep(msg.velocityplaypos);
+            rowComponents[RID_POLYAT]->stepComponent.setPlayingStep(msg.polyatplaypos);
         }
         if (msg.opcode == 1)
         {
-            
         }
     }
-        
 }
 
 void AudioPluginAudioProcessorEditor::doTransform()
 {
-    // if (!rowEntryComponent.steps.isValid())
-    //     return;
-    /*
-    processorRef.setRow(0, rowEntryComponent.steps);
-    processorRef.transformRow(0, (int)transposeSlider.getValue(), invertButton.getToggleState(),
-                              reverseButton.getToggleState());
-    rowEntryComponent.steps = processorRef.rowPitchClass;
-    rowEntryComponent.repaint();
-    */
+    
 }
 
 //==============================================================================
@@ -85,9 +75,9 @@ void AudioPluginAudioProcessorEditor::paint(juce::Graphics &g)
 
 void AudioPluginAudioProcessorEditor::resized()
 {
-    for (size_t i = 0; i < rowComponents.size(); ++i)
-    {
-        rowComponents[i]->setBounds(1, 178 * i, getWidth() - 2, 175);
-    }
+    rowComponents[0]->setBounds(1, 178 * 0, getWidth() - 2, 175);
+    rowComponents[1]->setBounds(1, 178 * 1, getWidth() / 2 - 2, 175);
+    rowComponents[2]->setBounds(1 + getWidth() / 2, 178 * 1, getWidth() / 2 - 2, 175);
+    rowComponents[3]->setBounds(1, 178 * 2, getWidth(), 175);
     keyboardComponent.setBounds(1, getBottom() - 50, getWidth() - 2, 50);
 }

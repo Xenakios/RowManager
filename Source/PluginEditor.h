@@ -106,6 +106,7 @@ class RowComponent : public juce::Component
     {
         rowid = rowId;
         infoLabel.setText(name, juce::dontSendNotification);
+        infoLabel.setColour(juce::Label::textColourId, juce::Colours::black);
         addAndMakeVisible(infoLabel);
         stepComponent.readonly = false;
         stepComponent.OnEdited = [this]() {
@@ -148,9 +149,9 @@ class RowComponent : public juce::Component
     {
         infoLabel.setBounds(0, 0, getWidth(), 25);
         stepComponent.setBounds(0, 25, getWidth(), getHeight() - 50);
-        menuButton.setBounds(0, stepComponent.getBottom(), 100, 25);
+        menuButton.setBounds(1, stepComponent.getBottom() + 1, 100, 24);
     }
-    void paint(juce::Graphics &g) override { g.fillAll(juce::Colours::salmon); }
+    void paint(juce::Graphics &g) override { g.fillAll(juce::Colours::orange); }
     size_t rowid = 0;
     std::function<void(size_t)> OnEdited;
     juce::Label infoLabel;
