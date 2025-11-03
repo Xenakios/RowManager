@@ -59,7 +59,7 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     void setStateInformation(const void *data, int sizeInBytes) override;
     std::array<Row, 4> rows;
     std::array<Row::Iterator, 4> rowIterators;
-    
+    std::array<size_t, 4> rowRepeats;
     void transformRow(size_t whichRow, int transpose, bool invert, bool reverse);
 
     void setRow(size_t which, Row r);
@@ -72,6 +72,7 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     choc::fifo::SingleReaderSingleWriterFIFO<MessageToUI> fifo_to_ui;
     std::atomic<bool> row_was_changed{false};
     std::atomic<bool> selfSequence{true};
+
   private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessor)

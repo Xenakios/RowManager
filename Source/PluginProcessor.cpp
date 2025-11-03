@@ -23,10 +23,13 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     rows[RID_OCTAVE] = Row::make_from_init_list({3, 2, 1, 0});
     rows[RID_VELOCITY] = Row::make_from_init_list({2, 3, 0, 1});
     rows[RID_POLYAT] = Row::make_from_init_list({2, 3, 0, 1, 5, 4});
+    rowRepeats = {1, 1, 1, 1};
     for (size_t i = 0; i < 4; ++i)
     {
         rowIterators[i] = Row::Iterator(rows[i], true);
+        rowIterators[i].repetitions = rowRepeats[i];
     }
+
     playingNotes.reserve(1024);
 }
 
@@ -44,6 +47,7 @@ void AudioPluginAudioProcessor::setRow(size_t which, Row r)
     auto oldpos = rowIterators[which].pos;
     rows[which] = r;
     rowIterators[which] = Row::Iterator(rows[which], true);
+    rowIterators[which].repetitions = rowRepeats[which];
     rowIterators[which].pos = oldpos;
 }
 

@@ -118,13 +118,23 @@ class Row
                 result = row->transformed_entries[pos];
             else
                 result = row->entries[pos];
-            ++pos;
-            if (pos == row->num_active_entries)
-                pos = 0;
+            if (repetition_cnt == 0)
+            {
+                ++pos;
+                if (pos == row->num_active_entries)
+                    pos = 0;
+            }
+            ++repetition_cnt;
+            if (repetition_cnt == repetitions)
+            {
+                repetition_cnt = 0;
+            }
             return result;
         }
         Row *row = nullptr;
         size_t pos = 0;
+        size_t repetitions = 1;
+        size_t repetition_cnt = 0;
         bool it_transformed = false;
     };
 };
