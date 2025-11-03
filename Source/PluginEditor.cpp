@@ -13,44 +13,46 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     addAndMakeVisible(keyboardComponent);
     processorRef.keyboardState.addListener(this);
 
-    rowEntryComponent.steps = processorRef.rowPitchClass;
+    rowComponents.push_back(std::make_unique<RowComponent>("Pitch Class", RID_PITCHCLASS,
+                                                           processorRef.rows[RID_PITCHCLASS]));
+    rowComponents.push_back(
+        std::make_unique<RowComponent>("Octave", RID_OCTAVE, processorRef.rows[RID_OCTAVE]));
 
+    rowComponents.push_back(
+        std::make_unique<RowComponent>("Velocity", RID_VELOCITY, processorRef.rows[RID_VELOCITY]));
+
+    for (auto &c : rowComponents)
+    {
+        addAndMakeVisible(c.get());
+    }
     transposeSlider.setNumDecimalPlacesToDisplay(0);
     transposeSlider.setRange(0, numrow_elements - 1, 1);
     transposeSlider.onValueChange = [this]() { doTransform(); };
-    addAndMakeVisible(transposeSlider);
-    // addAndMakeVisible(transformedRowComponent);
-    addAndMakeVisible(rowEntryComponent);
-    
-    rowEntryComponent.readonly = false;
-
-    octaveRowComponent.steps = processorRef.rowOctave;
-    addAndMakeVisible(octaveRowComponent);
+    // addAndMakeVisible(transposeSlider);
 
     invertButton.setButtonText("Invert");
     invertButton.onClick = [this]() { doTransform(); };
-    addAndMakeVisible(invertButton);
+    // addAndMakeVisible(invertButton);
 
     reverseButton.setButtonText("Reverse");
     reverseButton.onClick = [this]() { doTransform(); };
-    addAndMakeVisible(reverseButton);
+    // addAndMakeVisible(reverseButton);
 
-    addAndMakeVisible(velocityMenuButton);
+    // addAndMakeVisible(velocityMenuButton);
     velocityMenuButton.setButtonText("Velo...");
     velocityMenuButton.onClick = [this]() { showMenuForRow(1); };
 
-    addAndMakeVisible(octaveMenuButton);
+    // addAndMakeVisible(octaveMenuButton);
     octaveMenuButton.setButtonText("Octave...");
     octaveMenuButton.onClick = [this]() { showMenuForRow(2); };
 
-    rowEntryComponent.OnEdited = [this]() { doTransform(); };
-
-    setSize(810, 450);
+    setSize(810, 500);
     startTimer(100);
 }
 
 void AudioPluginAudioProcessorEditor::showMenuForRow(int which)
 {
+    /*
     juce::PopupMenu menu;
     int rowsize = 0;
     if (which == 1)
@@ -78,6 +80,7 @@ void AudioPluginAudioProcessorEditor::showMenuForRow(int which)
                      [this, i, which]() { processorRef.transformRow(which, i, true, true); });
     }
     menu.showMenuAsync(juce::PopupMenu::Options{});
+    */
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
@@ -108,6 +111,7 @@ void AudioPluginAudioProcessorEditor::handleNoteOn(juce::MidiKeyboardState *sour
 
 void AudioPluginAudioProcessorEditor::timerCallback()
 {
+    /*
     MessageToUI msg;
     while (processorRef.fifo_to_ui.pop(msg))
     {
@@ -122,17 +126,20 @@ void AudioPluginAudioProcessorEditor::timerCallback()
             octaveRowComponent.repaint();
         }
     }
+        */
 }
 
 void AudioPluginAudioProcessorEditor::doTransform()
 {
     // if (!rowEntryComponent.steps.isValid())
     //     return;
+    /*
     processorRef.setRow(0, rowEntryComponent.steps);
     processorRef.transformRow(0, (int)transposeSlider.getValue(), invertButton.getToggleState(),
                               reverseButton.getToggleState());
     rowEntryComponent.steps = processorRef.rowPitchClass;
     rowEntryComponent.repaint();
+    */
 }
 
 //==============================================================================
@@ -143,13 +150,9 @@ void AudioPluginAudioProcessorEditor::paint(juce::Graphics &g)
 
 void AudioPluginAudioProcessorEditor::resized()
 {
-    rowEntryComponent.setBounds(1, 1, getWidth() - 2, 149);
-    transposeSlider.setBounds(1, rowEntryComponent.getBottom() + 1, getWidth() - 2, 25);
-    invertButton.setBounds(1, transposeSlider.getBottom(), 80, 24);
-    reverseButton.setBounds(invertButton.getRight() + 2, transposeSlider.getBottom(), 80, 24);
-    velocityMenuButton.setBounds(reverseButton.getRight() + 2, transposeSlider.getBottom(), 80, 24);
-    octaveMenuButton.setBounds(velocityMenuButton.getRight() + 2, transposeSlider.getBottom(), 80,
-                               24);
-    keyboardComponent.setBounds(1, reverseButton.getBottom(), getWidth() - 2, 50);
-    octaveRowComponent.setBounds(1, getBottom() - 150, getWidth() - 2, 149);
+    for (size_t i = 0; i < rowComponents.size(); ++i)
+    {
+        rowComponents[i]->setBounds(1, 150 * i, getWidth() - 2, 150);
+    }
+    keyboardComponent.setBounds(1, getBottom() - 50, getWidth() - 2, 50);
 }

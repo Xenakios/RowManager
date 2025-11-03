@@ -15,48 +15,32 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
       )
 {
     fifo_to_ui.reset(1024);
-    rowPitchClass = Row::make_chromatic(16);
-    pitchClassIterator = Row::Iterator(rowPitchClass, true);
 
-    rowOctave.entries = {3, 2, 1, 0};
-    rowOctave.num_active_entries = 4;
-    octaveIterator = Row::Iterator(rowOctave, true);
-
-    rowVelocity.entries = {2, 3, 0, 1};
-    rowVelocity.num_active_entries = 4;
-    velocityIterator = Row::Iterator(rowVelocity, true);
-
+    rows[RID_PITCHCLASS] = Row::make_chromatic(16);
+    rows[RID_OCTAVE] = Row::make_from_init_list({3, 2, 1, 0});
+    rows[RID_VELOCITY] = Row::make_from_init_list({2, 3, 0, 1});
+    for (size_t i = 0; i < 3; ++i)
+    {
+        rowIterators[i] = Row::Iterator(rows[i], true);
+    }
     playingNotes.reserve(1024);
 }
 
-void AudioPluginAudioProcessor::transformRow(int whichRow, int transpose, bool invert, bool reverse)
+void AudioPluginAudioProcessor::transformRow(size_t whichRow, int transpose, bool invert,
+                                             bool reverse)
 {
     juce::ScopedLock locker(cs);
-    if (whichRow == 0)
-    {
-        rowPitchClass.setTransform(transpose, invert, reverse);
-    }
-    if (whichRow == 1)
-    {
-        rowVelocity.setTransform(transpose, invert, reverse);
-    }
-    if (whichRow == 2)
-    {
-        rowOctave.setTransform(transpose, invert, reverse);
-    }
+    rows[whichRow].setTransform(transpose, invert, reverse);
     row_was_changed = true;
 }
 
-void AudioPluginAudioProcessor::setRow(int which, Row r)
+void AudioPluginAudioProcessor::setRow(size_t which, Row r)
 {
     juce::ScopedLock locker(cs);
-    if (which == 0)
-    {
-        auto oldpos = pitchClassIterator.pos;
-        rowPitchClass = r;
-        pitchClassIterator = Row::Iterator(rowPitchClass, true);
-        pitchClassIterator.pos = oldpos;
-    }
+    auto oldpos = rowIterators[which].pos;
+    rows[which] = r;
+    rowIterators[which] = Row::Iterator(rows[which], true);
+    rowIterators[which].pos = oldpos;
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor() {}
@@ -192,15 +176,16 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     if (noteontriggered)
     {
         MessageToUI msg;
-        msg.pitchclassplaypos = pitchClassIterator.pos;
-        msg.octaveplaypos = octaveIterator.pos;
-        msg.velocityplaypos = velocityIterator.pos;
-        int octave = octaveIterator.next();
-        int note = 24 + octave * rowPitchClass.num_active_entries + pitchClassIterator.next();
+        msg.pitchclassplaypos = rowIterators[RID_PITCHCLASS].pos;
+        msg.octaveplaypos = rowIterators[RID_OCTAVE].pos;
+        msg.velocityplaypos = rowIterators[RID_VELOCITY].pos;
+        int octave = rowIterators[RID_OCTAVE].next();
+        int note = 24 + octave * rows[RID_PITCHCLASS].num_active_entries +
+                   rowIterators[RID_PITCHCLASS].next();
         msg.soundingpitch = note;
         fifo_to_ui.push(msg);
-        float velo = juce::jmap<float>(velocityIterator.next(), 0,
-                                       rowVelocity.num_active_entries - 1, 0.25, 1.0);
+        float velo = juce::jmap<float>(rowIterators[RID_VELOCITY].next(), 0,
+                                       rows[RID_VELOCITY].num_active_entries - 1, 0.25, 1.0);
         generatedMessages.addEvent(juce::MidiMessage::noteOn(1, note, velo), 0);
         playingNotes.push_back({1, note});
     }

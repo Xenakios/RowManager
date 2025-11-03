@@ -4,6 +4,7 @@
 #include "juce_audio_basics/juce_audio_basics.h"
 #include "juce_audio_utils/juce_audio_utils.h"
 #include "juce_core/juce_core.h"
+#include "juce_events/juce_events.h"
 #include "juce_graphics/juce_graphics.h"
 #include "juce_gui_basics/juce_gui_basics.h"
 #include "row_engine.h"
@@ -81,7 +82,7 @@ class MultiStepComponent : public juce::Component
                 g.setColour(juce::Colours::darkgrey);
             steph = juce::jmap<double>(steps.transformed_entries[i], 0, steps.num_active_entries,
                                        getHeight() - 2.0, 0);
-            g.fillRect((float)1.0 + i * stepw + stepw/2, steph, stepw/2, getHeight() - steph);
+            g.fillRect((float)1.0 + i * stepw + stepw / 2, steph, stepw / 2, getHeight() - steph);
             g.setColour(juce::Colours::white);
 
             g.drawText(juce::String(steps.entries[i]),
@@ -98,7 +99,26 @@ class MultiStepComponent : public juce::Component
     int stepstart = 0;
 };
 
-//==============================================================================
+class RowComponent : public juce::Component
+{
+  public:
+    RowComponent(juce::String name, size_t rowId, Row initialRow)
+    {
+        infoLabel.setText(name, juce::dontSendNotification);
+        addAndMakeVisible(infoLabel);
+        stepComponent.steps = initialRow;
+        addAndMakeVisible(stepComponent);
+    }
+    void resized() override
+    {
+        infoLabel.setBounds(0, 0, getWidth(), 25);
+        stepComponent.setBounds(0, 25, getWidth(), getHeight() - 25);
+    }
+
+    juce::Label infoLabel;
+    MultiStepComponent stepComponent;
+};
+
 class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor,
                                               public juce::MidiKeyboardStateListener,
                                               public juce::Timer
@@ -122,8 +142,7 @@ class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor,
     AudioPluginAudioProcessor &processorRef;
     size_t numrow_elements = 16;
     juce::Slider transposeSlider;
-    MultiStepComponent rowEntryComponent;
-    MultiStepComponent octaveRowComponent;
+    std::vector<std::unique_ptr<RowComponent>> rowComponents;
     juce::ToggleButton invertButton;
     juce::ToggleButton reverseButton;
     juce::TextButton velocityMenuButton;

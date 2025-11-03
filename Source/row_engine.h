@@ -3,6 +3,7 @@
 #include <array>
 #include <cassert>
 #include <cstdint>
+#include <initializer_list>
 
 class Row
 {
@@ -12,6 +13,14 @@ class Row
     {
         std::fill(entries.begin(), entries.end(), 0);
         std::fill(transformed_entries.begin(), transformed_entries.end(), 0);
+    }
+    static Row make_from_init_list(std::initializer_list<uint16_t> ilist)
+    {
+        Row result;
+        result.num_active_entries = ilist.size();
+        for (size_t i = 0; i < ilist.size(); ++i)
+            result.entries[i] = *(ilist.begin() + i);
+        return result;
     }
     static Row make_chromatic(size_t numentries)
     {

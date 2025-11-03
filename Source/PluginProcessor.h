@@ -16,6 +16,15 @@ struct MessageToUI
     int velocityplaypos = 0;
 };
 
+enum RowID
+{
+    RID_PITCHCLASS,
+    RID_VELOCITY,
+    RID_OCTAVE,
+    RID_POLYAT,
+    RID_LAST
+};
+
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
 {
   public:
@@ -54,18 +63,12 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     //==============================================================================
     void getStateInformation(juce::MemoryBlock &destData) override;
     void setStateInformation(const void *data, int sizeInBytes) override;
-    Row rowPitchClass;
-    Row::Iterator pitchClassIterator;
+    std::array<Row, 3> rows;
+    std::array<Row::Iterator, 3> rowIterators;
+    
+    void transformRow(size_t whichRow, int transpose, bool invert, bool reverse);
 
-    Row rowOctave;
-    Row::Iterator octaveIterator;
-
-    Row rowVelocity;
-    Row::Iterator velocityIterator;
-
-    void transformRow(int whichRow, int transpose, bool invert, bool reverse);
-
-    void setRow(int which, Row r);
+    void setRow(size_t which, Row r);
     juce::MidiKeyboardState keyboardState;
     juce::CriticalSection cs;
     std::vector<std::tuple<int, int>> playingNotes;
