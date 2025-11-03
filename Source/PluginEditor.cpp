@@ -18,8 +18,12 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     selfSequenceToggle.setButtonText("Self sequence");
     selfSequenceToggle.setToggleState(processorRef.selfSequence, juce::dontSendNotification);
     selfSequenceToggle.onClick = [this]() {
-        processorRef.selfSequence = selfSequenceToggle.getToggleState();
+        MessageToProcessor msg;
+        msg.par0 = selfSequenceToggle.getToggleState();
+        processorRef.fifo_to_processor.push(msg);
     };
+
+    addAndMakeVisible(debugLabel);
 
     rowComponents.push_back(std::make_unique<RowComponent>("Pitch Class", RID_PITCHCLASS,
                                                            processorRef.rows[RID_PITCHCLASS]));
@@ -67,6 +71,9 @@ void AudioPluginAudioProcessorEditor::timerCallback()
         {
         }
     }
+    juce::String txt;
+    txt << "playing notes " << processorRef.playingNotes.size();
+    debugLabel.setText(txt, juce::dontSendNotification);
 }
 
 void AudioPluginAudioProcessorEditor::doTransform() {}
@@ -81,6 +88,7 @@ void AudioPluginAudioProcessorEditor::resized()
 {
     int yoffs = 1;
     selfSequenceToggle.setBounds(1, yoffs, 120, 24);
+    debugLabel.setBounds(selfSequenceToggle.getRight() + 1, 1, getWidth() - 125, 24);
     yoffs += 25;
     rowComponents[0]->setBounds(1, yoffs, getWidth() - 2, 175);
     yoffs += 178;

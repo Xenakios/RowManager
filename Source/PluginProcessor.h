@@ -17,6 +17,12 @@ struct MessageToUI
     int polyatplaypos = 0;
 };
 
+struct MessageToProcessor
+{
+    int opcode = 0;
+    int par0 = 0;
+};
+
 using namespace xenakios;
 
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
@@ -70,6 +76,7 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     int playpos = 0;
     int pulselen = 11025;
     choc::fifo::SingleReaderSingleWriterFIFO<MessageToUI> fifo_to_ui;
+    choc::fifo::SingleReaderSingleWriterFIFO<MessageToProcessor> fifo_to_processor;
     std::atomic<bool> row_was_changed{false};
     std::atomic<bool> selfSequence{true};
 

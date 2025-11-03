@@ -183,6 +183,7 @@ class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor,
     std::vector<std::unique_ptr<RowComponent>> rowComponents;
     void doTransform();
     juce::ToggleButton selfSequenceToggle;
+    juce::Label debugLabel;
     bool rowValid = false;
     juce::MidiKeyboardComponent keyboardComponent;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessorEditor)

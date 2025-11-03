@@ -16,7 +16,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
       )
 {
     fifo_to_ui.reset(1024);
-
+    fifo_to_processor.reset(1024);
     rows[RID_PITCHCLASS].num_active_entries = 12;
     for (int i = 0; i < 12; ++i)
         rows[RID_PITCHCLASS].entries[i] = (i * 7) % 12;
@@ -162,6 +162,22 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
             }
         }
     }
+    MessageToProcessor msg;
+    while (fifo_to_processor.pop(msg))
+    {
+        if (msg.opcode == 0)
+        {
+            if (msg.par0 == 0)
+            {
+                selfSequence = false;
+                noteofftriggered = true;
+            }
+            if (msg.par0 == 1)
+            {
+                selfSequence = true;
+            }
+        }
+    }
     if (selfSequence)
     {
         for (int i = 0; i < buffer.getNumSamples(); ++i)
@@ -182,6 +198,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         for (auto &e : playingNotes)
         {
             generatedMessages.addEvent(juce::MidiMessage::noteOff(1, std::get<1>(e), 1.0f), 0);
+            std::get<0>(e) = -1;
         }
         playingNotes.clear();
     }
@@ -203,6 +220,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         generatedMessages.addEvent(juce::MidiMessage::noteOn(1, note, velo), 0);
         playingNotes.push_back({1, note});
     }
+    std::erase_if(playingNotes, [](const auto &t) { return std::get<0>(t) == -1; });
     midiMessages.swapWith(generatedMessages);
     auto totalNumInputChannels = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
