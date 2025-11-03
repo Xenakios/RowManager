@@ -71,10 +71,17 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     void setRow(size_t which, Row r);
     juce::MidiKeyboardState keyboardState;
     juce::CriticalSection cs;
-    std::vector<std::tuple<int, int>> playingNotes;
+    struct NoteInfo
+    {
+        int chan = 0;
+        int note = 0;
+        int duration = 0;
+    };
+    std::vector<NoteInfo> playingNotes;
     juce::MidiBuffer generatedMessages;
     int playpos = 0;
     int pulselen = 11025;
+    int notelen = 11025;
     choc::fifo::SingleReaderSingleWriterFIFO<MessageToUI> fifo_to_ui;
     choc::fifo::SingleReaderSingleWriterFIFO<MessageToProcessor> fifo_to_processor;
     std::atomic<bool> row_was_changed{false};

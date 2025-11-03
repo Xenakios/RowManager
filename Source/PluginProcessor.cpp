@@ -142,8 +142,8 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     }
     generatedMessages.clear();
     keyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(), true);
-    bool noteontriggered = false;
-    bool noteofftriggered = false;
+    int noteonstatus = 0;
+    
     for (const juce::MidiMessageMetadata metadata : midiMessages)
     {
         auto msg = metadata.getMessage();
@@ -151,14 +151,14 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         {
             if (msg.getNoteNumber() == 48)
             {
-                noteontriggered = true;
+                noteonstatus = 1;
             }
         }
         if (msg.isNoteOff())
         {
             if (msg.getNoteNumber() == 48)
             {
-                noteofftriggered = true;
+                noteonstatus = 3;
             }
         }
     }
@@ -170,12 +170,21 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
             if (amsg.par0 == 0)
             {
                 selfSequence = false;
-                noteofftriggered = true;
+                noteonstatus = 3;
             }
             if (amsg.par0 == 1)
             {
                 selfSequence = true;
             }
+        }
+    }
+    for (auto &pm : playingNotes)
+    {
+        pm.duration -= buffer.getNumSamples();
+        if (noteonstatus == 3 || pm.duration <= 0)
+        {
+            pm.chan = -1;
+            generatedMessages.addEvent(juce::MidiMessage::noteOff(1, pm.note, 0.0f), 0);
         }
     }
     if (selfSequence)
@@ -184,8 +193,8 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         {
             if (playpos == 0)
             {
-                noteontriggered = true;
-                noteofftriggered = true;
+                noteonstatus = 2;
+                // noteofftriggered = true;
             }
             ++playpos;
             if (playpos == pulselen)
@@ -193,16 +202,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         }
     }
 
-    if (noteofftriggered)
-    {
-        for (auto &e : playingNotes)
-        {
-            generatedMessages.addEvent(juce::MidiMessage::noteOff(1, std::get<1>(e), 1.0f), 0);
-            std::get<0>(e) = -1;
-        }
-        
-    }
-    if (noteontriggered)
+    if (noteonstatus == 1 || noteonstatus == 2)
     {
         MessageToUI msg;
         msg.pitchclassplaypos = rowIterators[RID_PITCHCLASS].pos;
@@ -218,10 +218,14 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         float velo = juce::jmap<float>(rowIterators[RID_VELOCITY].next(), 0,
                                        rows[RID_VELOCITY].num_active_entries - 1, 0.25, 1.0);
         generatedMessages.addEvent(juce::MidiMessage::noteOn(1, note, velo), 0);
-        playingNotes.push_back({1, note});
+        int lentouse = notelen;
+        if (noteonstatus == 1)
+            lentouse = 100000000;
+        playingNotes.push_back({1, note, lentouse});
     }
-    std::erase_if(playingNotes, [](const auto &t) { return std::get<0>(t) == -1; });
+    std::erase_if(playingNotes, [](const auto &t) { return t.chan == -1; });
     midiMessages.swapWith(generatedMessages);
+
     auto totalNumInputChannels = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
