@@ -158,17 +158,21 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
             }
         }
     }
-    for (int i = 0; i < buffer.getNumSamples(); ++i)
+    if (selfSequence)
     {
-        if (playpos == 0)
+        for (int i = 0; i < buffer.getNumSamples(); ++i)
         {
-            noteontriggered = true;
-            noteofftriggered = true;
+            if (playpos == 0)
+            {
+                noteontriggered = true;
+                noteofftriggered = true;
+            }
+            ++playpos;
+            if (playpos == pulselen)
+                playpos = 0;
         }
-        ++playpos;
-        if (playpos == pulselen)
-            playpos = 0;
     }
+
     if (noteofftriggered)
     {
         for (auto &e : playingNotes)

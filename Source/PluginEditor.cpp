@@ -14,6 +14,13 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     addAndMakeVisible(keyboardComponent);
     processorRef.keyboardState.addListener(this);
 
+    addAndMakeVisible(selfSequenceToggle);
+    selfSequenceToggle.setButtonText("Self sequence");
+    selfSequenceToggle.setToggleState(processorRef.selfSequence, juce::dontSendNotification);
+    selfSequenceToggle.onClick = [this]() {
+        processorRef.selfSequence = selfSequenceToggle.getToggleState();
+    };
+
     rowComponents.push_back(std::make_unique<RowComponent>("Pitch Class", RID_PITCHCLASS,
                                                            processorRef.rows[RID_PITCHCLASS]));
     rowComponents.push_back(
@@ -30,7 +37,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
             processorRef.setRow(id, rowComponents[i]->stepComponent.steps);
         };
     }
-    setSize(900, 610);
+    setSize(900, 620);
     startTimer(100);
 }
 
@@ -62,10 +69,7 @@ void AudioPluginAudioProcessorEditor::timerCallback()
     }
 }
 
-void AudioPluginAudioProcessorEditor::doTransform()
-{
-    
-}
+void AudioPluginAudioProcessorEditor::doTransform() {}
 
 //==============================================================================
 void AudioPluginAudioProcessorEditor::paint(juce::Graphics &g)
@@ -75,9 +79,14 @@ void AudioPluginAudioProcessorEditor::paint(juce::Graphics &g)
 
 void AudioPluginAudioProcessorEditor::resized()
 {
-    rowComponents[0]->setBounds(1, 178 * 0, getWidth() - 2, 175);
-    rowComponents[1]->setBounds(1, 178 * 1, getWidth() / 2 - 2, 175);
-    rowComponents[2]->setBounds(1 + getWidth() / 2, 178 * 1, getWidth() / 2 - 2, 175);
-    rowComponents[3]->setBounds(1, 178 * 2, getWidth(), 175);
+    int yoffs = 1;
+    selfSequenceToggle.setBounds(1, yoffs, 120, 24);
+    yoffs += 25;
+    rowComponents[0]->setBounds(1, yoffs, getWidth() - 2, 175);
+    yoffs += 178;
+    rowComponents[1]->setBounds(1, yoffs, getWidth() / 2 - 2, 175);
+    rowComponents[2]->setBounds(1 + getWidth() / 2, yoffs, getWidth() / 2 - 2, 175);
+    yoffs += 178;
+    rowComponents[3]->setBounds(1, yoffs, getWidth(), 175);
     keyboardComponent.setBounds(1, getBottom() - 50, getWidth() - 2, 50);
 }

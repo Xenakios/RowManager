@@ -71,7 +71,7 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     int pulselen = 11025;
     choc::fifo::SingleReaderSingleWriterFIFO<MessageToUI> fifo_to_ui;
     std::atomic<bool> row_was_changed{false};
-
+    std::atomic<bool> selfSequence{true};
   private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessor)
