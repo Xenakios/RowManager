@@ -104,18 +104,33 @@ class RowComponent : public juce::Component
   public:
     RowComponent(juce::String name, size_t rowId, Row initialRow)
     {
+        rowid = rowId;
         infoLabel.setText(name, juce::dontSendNotification);
         addAndMakeVisible(infoLabel);
+        stepComponent.readonly = false;
+        stepComponent.OnEdited = [this]() {
+            if (OnEdited)
+                OnEdited(rowid);
+        };
         stepComponent.steps = initialRow;
         addAndMakeVisible(stepComponent);
+        addAndMakeVisible(menuButton);
+        menuButton.setButtonText("Transform...");
     }
     void resized() override
     {
         infoLabel.setBounds(0, 0, getWidth(), 25);
-        stepComponent.setBounds(0, 25, getWidth(), getHeight() - 25);
+        stepComponent.setBounds(0, 25, getWidth(), getHeight() - 50);
+        menuButton.setBounds(0, stepComponent.getBottom(), 100, 25);
     }
-
+    void paint(juce::Graphics &g) override
+    {
+        g.fillAll(juce::Colours::salmon);
+    }
+    size_t rowid = 0;
+    std::function<void(size_t)> OnEdited;
     juce::Label infoLabel;
+    juce::TextButton menuButton;
     MultiStepComponent stepComponent;
 };
 

@@ -3,6 +3,7 @@
 #include "juce_events/juce_events.h"
 #include "juce_graphics/juce_graphics.h"
 #include "juce_gui_basics/juce_gui_basics.h"
+#include "row_engine.h"
 #include "PluginEditor.h"
 
 //==============================================================================
@@ -21,9 +22,12 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     rowComponents.push_back(
         std::make_unique<RowComponent>("Velocity", RID_VELOCITY, processorRef.rows[RID_VELOCITY]));
 
-    for (auto &c : rowComponents)
+    for (size_t i = 0; i < rowComponents.size(); ++i)
     {
-        addAndMakeVisible(c.get());
+        addAndMakeVisible(rowComponents[i].get());
+        rowComponents[i]->OnEdited = [this, i](size_t id) {
+            processorRef.setRow(id, rowComponents[i]->stepComponent.steps);
+        };
     }
     transposeSlider.setNumDecimalPlacesToDisplay(0);
     transposeSlider.setRange(0, numrow_elements - 1, 1);
@@ -46,7 +50,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     octaveMenuButton.setButtonText("Octave...");
     octaveMenuButton.onClick = [this]() { showMenuForRow(2); };
 
-    setSize(810, 500);
+    setSize(900, 600);
     startTimer(100);
 }
 
@@ -111,22 +115,22 @@ void AudioPluginAudioProcessorEditor::handleNoteOn(juce::MidiKeyboardState *sour
 
 void AudioPluginAudioProcessorEditor::timerCallback()
 {
-    /*
     MessageToUI msg;
     while (processorRef.fifo_to_ui.pop(msg))
     {
         if (msg.opcode == 0)
         {
-            rowEntryComponent.setPlayingStep(msg.pitchclassplaypos);
-            octaveRowComponent.setPlayingStep(msg.octaveplaypos);
+            rowComponents[RID_PITCHCLASS]->stepComponent.setPlayingStep(msg.pitchclassplaypos);
+            rowComponents[RID_OCTAVE]->stepComponent.setPlayingStep(msg.octaveplaypos);
+            rowComponents[RID_VELOCITY]->stepComponent.setPlayingStep(msg.velocityplaypos);
         }
         if (msg.opcode == 1)
         {
-            octaveRowComponent.steps = processorRef.rowOctave;
-            octaveRowComponent.repaint();
+            //octaveRowComponent.steps = processorRef.rowOctave;
+            //octaveRowComponent.repaint();
         }
     }
-        */
+        
 }
 
 void AudioPluginAudioProcessorEditor::doTransform()
@@ -152,7 +156,7 @@ void AudioPluginAudioProcessorEditor::resized()
 {
     for (size_t i = 0; i < rowComponents.size(); ++i)
     {
-        rowComponents[i]->setBounds(1, 150 * i, getWidth() - 2, 150);
+        rowComponents[i]->setBounds(1, 175 * i, getWidth() - 2, 175);
     }
     keyboardComponent.setBounds(1, getBottom() - 50, getWidth() - 2, 50);
 }
