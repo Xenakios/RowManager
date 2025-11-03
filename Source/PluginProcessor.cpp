@@ -162,17 +162,17 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
             }
         }
     }
-    MessageToProcessor msg;
-    while (fifo_to_processor.pop(msg))
+    MessageToProcessor amsg;
+    while (fifo_to_processor.pop(amsg))
     {
-        if (msg.opcode == 0)
+        if (amsg.opcode == 0)
         {
-            if (msg.par0 == 0)
+            if (amsg.par0 == 0)
             {
                 selfSequence = false;
                 noteofftriggered = true;
             }
-            if (msg.par0 == 1)
+            if (amsg.par0 == 1)
             {
                 selfSequence = true;
             }
@@ -200,7 +200,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
             generatedMessages.addEvent(juce::MidiMessage::noteOff(1, std::get<1>(e), 1.0f), 0);
             std::get<0>(e) = -1;
         }
-        playingNotes.clear();
+        
     }
     if (noteontriggered)
     {
