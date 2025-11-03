@@ -142,7 +142,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     }
     generatedMessages.clear();
     keyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(), true);
-    int noteonstatus = 0;
+    int triggerstatus = 0;
     
     for (const juce::MidiMessageMetadata metadata : midiMessages)
     {
@@ -151,14 +151,14 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         {
             if (msg.getNoteNumber() == 48)
             {
-                noteonstatus = 1;
+                triggerstatus = 1;
             }
         }
         if (msg.isNoteOff())
         {
             if (msg.getNoteNumber() == 48)
             {
-                noteonstatus = 3;
+                triggerstatus = 3;
             }
         }
     }
@@ -170,7 +170,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
             if (amsg.par0 == 0)
             {
                 selfSequence = false;
-                noteonstatus = 3;
+                triggerstatus = 3;
             }
             if (amsg.par0 == 1)
             {
@@ -181,7 +181,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     for (auto &pm : playingNotes)
     {
         pm.duration -= buffer.getNumSamples();
-        if (noteonstatus == 3 || pm.duration <= 0)
+        if (triggerstatus == 3 || pm.duration <= 0)
         {
             pm.chan = -1;
             generatedMessages.addEvent(juce::MidiMessage::noteOff(1, pm.note, 0.0f), 0);
@@ -193,7 +193,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         {
             if (playpos == 0)
             {
-                noteonstatus = 2;
+                triggerstatus = 2;
                 // noteofftriggered = true;
             }
             ++playpos;
@@ -202,7 +202,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         }
     }
 
-    if (noteonstatus == 1 || noteonstatus == 2)
+    if (triggerstatus == 1 || triggerstatus == 2)
     {
         MessageToUI msg;
         msg.pitchclassplaypos = rowIterators[RID_PITCHCLASS].pos;
@@ -219,7 +219,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                                        rows[RID_VELOCITY].num_active_entries - 1, 0.25, 1.0);
         generatedMessages.addEvent(juce::MidiMessage::noteOn(1, note, velo), 0);
         int lentouse = notelen;
-        if (noteonstatus == 1)
+        if (triggerstatus == 1)
             lentouse = 100000000;
         playingNotes.push_back({1, note, lentouse});
     }
