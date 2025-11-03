@@ -25,6 +25,8 @@ struct MessageToProcessor
 
 using namespace xenakios;
 
+using toproc_fifo_t = choc::fifo::SingleReaderSingleWriterFIFO<MessageToProcessor>;
+
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
 {
   public:
@@ -71,6 +73,7 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     void setRow(size_t which, Row r);
     juce::MidiKeyboardState keyboardState;
     juce::CriticalSection cs;
+    int velocityLow = 64;
     struct NoteInfo
     {
         int chan = 0;
@@ -83,7 +86,8 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     int pulselen = 11025;
     int notelen = 11025;
     choc::fifo::SingleReaderSingleWriterFIFO<MessageToUI> fifo_to_ui;
-    choc::fifo::SingleReaderSingleWriterFIFO<MessageToProcessor> fifo_to_processor;
+    
+    toproc_fifo_t fifo_to_processor;
     std::atomic<bool> row_was_changed{false};
     std::atomic<bool> selfSequence{true};
 

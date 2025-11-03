@@ -143,7 +143,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     generatedMessages.clear();
     keyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(), true);
     int triggerstatus = 0;
-    
+
     for (const juce::MidiMessageMetadata metadata : midiMessages)
     {
         auto msg = metadata.getMessage();
@@ -176,6 +176,10 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
             {
                 selfSequence = true;
             }
+        }
+        if (amsg.opcode == 1)
+        {
+            velocityLow = amsg.par0;
         }
     }
     for (auto &pm : playingNotes)
@@ -216,8 +220,8 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         msg.soundingpitch = note;
         fifo_to_ui.push(msg);
         float velo = juce::jmap<float>(rowIterators[RID_VELOCITY].next(), 0,
-                                       rows[RID_VELOCITY].num_active_entries - 1, 0.25, 1.0);
-        generatedMessages.addEvent(juce::MidiMessage::noteOn(1, note, velo), 0);
+                                       rows[RID_VELOCITY].num_active_entries - 1, velocityLow, 127);
+        generatedMessages.addEvent(juce::MidiMessage::noteOn(1, note, (juce::uint8)velo), 0);
         int lentouse = notelen;
         if (triggerstatus == 1)
             lentouse = 100000000;

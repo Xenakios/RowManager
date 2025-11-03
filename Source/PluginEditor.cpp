@@ -26,14 +26,15 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     addAndMakeVisible(debugLabel);
 
     rowComponents.push_back(std::make_unique<RowComponent>("Pitch Class", RID_PITCHCLASS,
-                                                           processorRef.rows[RID_PITCHCLASS]));
-    rowComponents.push_back(
-        std::make_unique<RowComponent>("Octave", RID_OCTAVE, processorRef.rows[RID_OCTAVE]));
+                                                           processorRef.rows[RID_PITCHCLASS],
+                                                           processorRef.fifo_to_processor));
+    rowComponents.push_back(std::make_unique<RowComponent>(
+        "Octave", RID_OCTAVE, processorRef.rows[RID_OCTAVE], processorRef.fifo_to_processor));
 
-    rowComponents.push_back(
-        std::make_unique<RowComponent>("Velocity", RID_VELOCITY, processorRef.rows[RID_VELOCITY]));
-    rowComponents.push_back(
-        std::make_unique<RowComponent>("PolyAT", RID_POLYAT, processorRef.rows[RID_POLYAT]));
+    rowComponents.push_back(std::make_unique<VelocityRowComponent>(
+        "Velocity", RID_VELOCITY, processorRef.rows[RID_VELOCITY], processorRef.fifo_to_processor));
+    rowComponents.push_back(std::make_unique<RowComponent>(
+        "PolyAT", RID_POLYAT, processorRef.rows[RID_POLYAT], processorRef.fifo_to_processor));
     for (size_t i = 0; i < rowComponents.size(); ++i)
     {
         addAndMakeVisible(rowComponents[i].get());

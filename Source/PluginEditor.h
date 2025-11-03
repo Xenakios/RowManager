@@ -102,7 +102,8 @@ class MultiStepComponent : public juce::Component
 class RowComponent : public juce::Component
 {
   public:
-    RowComponent(juce::String name, size_t rowId, Row initialRow)
+    RowComponent(juce::String name, size_t rowId, Row initialRow, toproc_fifo_t &fifo)
+        : toproc_fifo(fifo)
     {
         rowid = rowId;
         infoLabel.setText(name, juce::dontSendNotification);
@@ -154,9 +155,40 @@ class RowComponent : public juce::Component
     void paint(juce::Graphics &g) override { g.fillAll(juce::Colours::orange); }
     size_t rowid = 0;
     std::function<void(size_t)> OnEdited;
+    toproc_fifo_t &toproc_fifo;
     juce::Label infoLabel;
     juce::TextButton menuButton;
     MultiStepComponent stepComponent;
+};
+
+class VelocityRowComponent : public RowComponent
+{
+  public:
+    VelocityRowComponent(juce::String name, size_t rowId, Row initialRow, toproc_fifo_t &fifo)
+        : RowComponent(name, rowId, initialRow, fifo)
+    {
+        addAndMakeVisible(velLowSlider);
+        velLowSlider.setSliderStyle(juce::Slider::SliderStyle::IncDecButtons);
+        velLowSlider.setNumDecimalPlacesToDisplay(0);
+        velLowSlider.setTextBoxStyle(juce::Slider::TextEntryBoxPosition::TextBoxLeft, false, 30,
+                                     24);
+        velLowSlider.setRange(0, 127,1);
+        //velLowSlider.setIncDecButtonsMode
+        velLowSlider.setValue(64, juce::dontSendNotification);
+        velLowSlider.onValueChange = [this]() {
+            MessageToProcessor msg;
+            msg.opcode = 1;
+            msg.par0 = velLowSlider.getValue();
+            toproc_fifo.push(msg);
+        };
+    }
+    juce::Slider velLowSlider;
+    juce::Slider velCurveSlider;
+    void resized() override
+    {
+        RowComponent::resized();
+        velLowSlider.setBounds(menuButton.getRight() + 2, menuButton.getY(), 120, 24);
+    }
 };
 
 class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor,
