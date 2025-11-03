@@ -29,7 +29,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
             processorRef.setRow(id, rowComponents[i]->stepComponent.steps);
         };
     }
-    setSize(900, 600);
+    setSize(900, 610);
     startTimer(100);
 }
 
@@ -87,7 +87,7 @@ void AudioPluginAudioProcessorEditor::resized()
 {
     for (size_t i = 0; i < rowComponents.size(); ++i)
     {
-        rowComponents[i]->setBounds(1, 175 * i, getWidth() - 2, 175);
+        rowComponents[i]->setBounds(1, 178 * i, getWidth() - 2, 175);
     }
     keyboardComponent.setBounds(1, getBottom() - 50, getWidth() - 2, 50);
 }
