@@ -29,63 +29,10 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
             processorRef.setRow(id, rowComponents[i]->stepComponent.steps);
         };
     }
-    transposeSlider.setNumDecimalPlacesToDisplay(0);
-    transposeSlider.setRange(0, numrow_elements - 1, 1);
-    transposeSlider.onValueChange = [this]() { doTransform(); };
-    // addAndMakeVisible(transposeSlider);
-
-    invertButton.setButtonText("Invert");
-    invertButton.onClick = [this]() { doTransform(); };
-    // addAndMakeVisible(invertButton);
-
-    reverseButton.setButtonText("Reverse");
-    reverseButton.onClick = [this]() { doTransform(); };
-    // addAndMakeVisible(reverseButton);
-
-    // addAndMakeVisible(velocityMenuButton);
-    velocityMenuButton.setButtonText("Velo...");
-    velocityMenuButton.onClick = [this]() { showMenuForRow(1); };
-
-    // addAndMakeVisible(octaveMenuButton);
-    octaveMenuButton.setButtonText("Octave...");
-    octaveMenuButton.onClick = [this]() { showMenuForRow(2); };
-
     setSize(900, 600);
     startTimer(100);
 }
 
-void AudioPluginAudioProcessorEditor::showMenuForRow(int which)
-{
-    /*
-    juce::PopupMenu menu;
-    int rowsize = 0;
-    if (which == 1)
-        rowsize = processorRef.rowOctave.num_active_entries;
-    if (which == 2)
-        rowsize = processorRef.rowVelocity.num_active_entries;
-    for (int i = 0; i < rowsize; ++i)
-    {
-        menu.addItem("Prime " + juce::String(i),
-                     [this, i, which]() { processorRef.transformRow(which, i, false, false); });
-    }
-    for (int i = 0; i < rowsize; ++i)
-    {
-        menu.addItem("Retrograde " + juce::String(i),
-                     [this, i, which]() { processorRef.transformRow(which, i, false, true); });
-    }
-    for (int i = 0; i < rowsize; ++i)
-    {
-        menu.addItem("Inversion " + juce::String(i),
-                     [this, i, which]() { processorRef.transformRow(which, i, true, false); });
-    }
-    for (int i = 0; i < rowsize; ++i)
-    {
-        menu.addItem("Retrograde Inversion " + juce::String(i),
-                     [this, i, which]() { processorRef.transformRow(which, i, true, true); });
-    }
-    menu.showMenuAsync(juce::PopupMenu::Options{});
-    */
-}
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 {
@@ -95,22 +42,7 @@ AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 void AudioPluginAudioProcessorEditor::handleNoteOn(juce::MidiKeyboardState *source, int midiChannel,
                                                    int midiNoteNumber, float velocity)
 {
-    if (midiNoteNumber >= 60 && midiNoteNumber < 76)
-    {
-        transposeSlider.setValue(midiNoteNumber - 60);
-    }
-    if (midiNoteNumber == 58)
-    {
-        invertButton.triggerClick();
-    }
-    if (midiNoteNumber == 59)
-    {
-        reverseButton.triggerClick();
-    }
-    if (midiNoteNumber == 57)
-    {
-        // processorRef.transformVelocityRow(0, bool invert, bool reverse)
-    }
+    
 }
 
 void AudioPluginAudioProcessorEditor::timerCallback()
@@ -126,8 +58,7 @@ void AudioPluginAudioProcessorEditor::timerCallback()
         }
         if (msg.opcode == 1)
         {
-            //octaveRowComponent.steps = processorRef.rowOctave;
-            //octaveRowComponent.repaint();
+            
         }
     }
         

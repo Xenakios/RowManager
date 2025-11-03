@@ -116,6 +116,33 @@ class RowComponent : public juce::Component
         addAndMakeVisible(stepComponent);
         addAndMakeVisible(menuButton);
         menuButton.setButtonText("Transform...");
+        menuButton.onClick = [this]() {
+            juce::PopupMenu menu;
+            struct Info
+            {
+                juce::String text;
+                bool inv = false;
+                bool rev = false;
+            };
+            std::vector<Info> infos;
+            infos.emplace_back("Prime", false, false);
+            infos.emplace_back("Retrograde", false, true);
+            infos.emplace_back("Inverse", true, false);
+            infos.emplace_back("Retrograde Inverse", true, true);
+            for (auto &transform : infos)
+            {
+                for (int i = 0; i < stepComponent.steps.num_active_entries; ++i)
+                {
+                    menu.addItem(transform.text + " " + juce::String(i), [this, transform, i]() {
+                        stepComponent.steps.setTransform(i, transform.inv, transform.rev);
+                        if (OnEdited)
+                            OnEdited(rowid);
+                    });
+                }
+            }
+
+            menu.showMenuAsync(juce::PopupMenu::Options{});
+        };
     }
     void resized() override
     {
@@ -123,10 +150,7 @@ class RowComponent : public juce::Component
         stepComponent.setBounds(0, 25, getWidth(), getHeight() - 50);
         menuButton.setBounds(0, stepComponent.getBottom(), 100, 25);
     }
-    void paint(juce::Graphics &g) override
-    {
-        g.fillAll(juce::Colours::salmon);
-    }
+    void paint(juce::Graphics &g) override { g.fillAll(juce::Colours::salmon); }
     size_t rowid = 0;
     std::function<void(size_t)> OnEdited;
     juce::Label infoLabel;
@@ -155,15 +179,9 @@ class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor,
 
   private:
     AudioPluginAudioProcessor &processorRef;
-    size_t numrow_elements = 16;
-    juce::Slider transposeSlider;
     std::vector<std::unique_ptr<RowComponent>> rowComponents;
-    juce::ToggleButton invertButton;
-    juce::ToggleButton reverseButton;
-    juce::TextButton velocityMenuButton;
-    juce::TextButton octaveMenuButton;
     void doTransform();
-    void showMenuForRow(int which);
+
     bool rowValid = false;
     juce::MidiKeyboardComponent keyboardComponent;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessorEditor)
