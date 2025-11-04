@@ -71,3 +71,10 @@ target_link_libraries(RowManager
         juce::juce_recommended_config_flags
         # juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags)
+
+add_executable(TestingProgram 
+    Source/testing.cpp 
+    )
+# Source/Experimental/xaudiograph.cpp
+target_compile_definitions(TestingProgram PRIVATE XENPYTHONBINDINGS=0 NOJUCE=1 _USE_MATH_DEFINES=1)
+target_compile_options(TestingProgram PRIVATE -Werror=return-type)
