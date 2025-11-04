@@ -8,6 +8,7 @@ inline void print_row(Row::TIterator &it)
     for (int i = 0; i < it.row->num_active_entries; ++i)
     {
         std::print("{:3}", it.next());
+        
     }
     std::print("\n");
 }

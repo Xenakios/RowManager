@@ -128,45 +128,30 @@ class Row
         RowTransform transform;
         int pos = 0;
         TIterator() = default;
-        TIterator(Row &r, RowTransform t) : row(&r), transform(t)
-        {
-            if (transform.reversed)
-                pos = row->num_active_entries - 1;
-        }
-        void set_position(uint16_t p)
-        {
-            if (transform.reversed)
-                pos = (row->num_active_entries - 1) - p;
-            else
-                pos = p;
-        }
+        TIterator(Row &r, RowTransform t) : row(&r), transform(t) {}
+        void set_position(uint16_t p) { pos = p; }
         TIterator with_transform(RowTransform t)
         {
             TIterator result = *this;
             result.transform = t;
-            if (t.reversed)
-                result.pos = (result.row->num_active_entries - 1) - result.pos;
             return result;
         }
         uint16_t next()
         {
-            assert(row);
-            uint16_t result = (row->entries[pos] + transform.transpose) % row->num_active_entries;
+            auto rpos = position_real(pos);
+            uint16_t result = (row->entries[rpos] + transform.transpose) % row->num_active_entries;
             if (transform.inverted)
                 result = (row->num_active_entries - result) % row->num_active_entries;
-            if (transform.reversed)
-            {
-                --pos;
-                if (pos == -1)
-                    pos = row->num_active_entries - 1;
-            }
-            else
-            {
-                ++pos;
-                if (pos == row->num_active_entries)
-                    pos = 0;
-            }
+            ++pos;
+            if (pos == row->num_active_entries)
+                pos = 0;
             return result;
+        }
+        uint16_t position_real(uint64_t p)
+        {
+            if (transform.reversed)
+                return (row->num_active_entries - 1) - p;
+            return p;
         }
     };
     class Iterator
@@ -180,6 +165,7 @@ class Row
                 row->setTransform(row->tprops.transpose, row->tprops.inverted,
                                   row->tprops.reversed);
         }
+
         uint16_t next()
         {
             assert(row);
