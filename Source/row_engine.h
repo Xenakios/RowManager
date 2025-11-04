@@ -4,6 +4,9 @@
 #include <cassert>
 #include <cstdint>
 #include <initializer_list>
+#include <string>
+#include <format>
+
 namespace xenakios
 {
 
@@ -14,6 +17,25 @@ enum RowID
     RID_OCTAVE,
     RID_POLYAT,
     RID_LAST
+};
+
+struct RowTransform
+{
+    uint16_t transpose = 0;
+    bool inverted = false;
+    bool reversed = false;
+    std::string to_string()
+    {
+        if (!inverted && !reversed)
+            return std::format("Prime {}", transpose);
+        if (!inverted && reversed)
+            return std::format("Retrograde {}", transpose);
+        if (inverted && !reversed)
+            return std::format("Inverse {}", transpose);
+        if (inverted && reversed)
+            return std::format("Retrograde Inverse {}", transpose);
+        return "ERROR";
+    }
 };
 
 class Row
@@ -99,6 +121,54 @@ class Row
         }
         return true;
     }
+    class TIterator
+    {
+      public:
+        Row *row = nullptr;
+        RowTransform transform;
+        int pos = 0;
+        TIterator() = default;
+        TIterator(Row &r, RowTransform t) : row(&r), transform(t)
+        {
+            if (transform.reversed)
+                pos = row->num_active_entries - 1;
+        }
+        void set_position(uint16_t p)
+        {
+            if (transform.reversed)
+                pos = (row->num_active_entries - 1) - p;
+            else
+                pos = p;
+        }
+        TIterator with_transform(RowTransform t)
+        {
+            TIterator result = *this;
+            result.transform = t;
+            if (t.reversed)
+                result.pos = (result.row->num_active_entries - 1) - result.pos;
+            return result;
+        }
+        uint16_t next()
+        {
+            assert(row);
+            uint16_t result = (row->entries[pos] + transform.transpose) % row->num_active_entries;
+            if (transform.inverted)
+                result = (row->num_active_entries - result) % row->num_active_entries;
+            if (transform.reversed)
+            {
+                --pos;
+                if (pos == -1)
+                    pos = row->num_active_entries - 1;
+            }
+            else
+            {
+                ++pos;
+                if (pos == row->num_active_entries)
+                    pos = 0;
+            }
+            return result;
+        }
+    };
     class Iterator
     {
       public:
