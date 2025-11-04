@@ -39,7 +39,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     {
         addAndMakeVisible(rowComponents[i].get());
         rowComponents[i]->OnEdited = [this, i](size_t id) {
-            processorRef.setRow(id, rowComponents[i]->stepComponent.steps);
+            processorRef.setRow(id, rowComponents[i]->stepComponent.steps,
+                                rowComponents[i]->stepComponent.row_iterator.transform);
         };
     }
     setSize(900, 620);

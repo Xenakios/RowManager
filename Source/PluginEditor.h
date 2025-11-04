@@ -8,6 +8,7 @@
 #include "juce_graphics/juce_graphics.h"
 #include "juce_gui_basics/juce_gui_basics.h"
 #include "row_engine.h"
+#include <cstdint>
 
 class MultiStepComponent : public juce::Component
 {
@@ -80,7 +81,8 @@ class MultiStepComponent : public juce::Component
                 g.setColour(juce::Colours::grey);
             else
                 g.setColour(juce::Colours::darkgrey);
-            steph = juce::jmap<double>(steps.transformed_entries[i], 0, steps.num_active_entries,
+            row_iterator.set_position(i);
+            steph = juce::jmap<double>(row_iterator.next(), 0, steps.num_active_entries,
                                        getHeight() - 2.0, 0);
             g.fillRect((float)1.0 + i * stepw + stepw / 2, steph, stepw / 2, getHeight() - steph);
             g.setColour(juce::Colours::white);
@@ -92,6 +94,7 @@ class MultiStepComponent : public juce::Component
     }
 
     Row steps;
+    Row::Iterator row_iterator;
 
   private:
     int draggingIndex = -1;
@@ -115,6 +118,7 @@ class RowComponent : public juce::Component
                 OnEdited(rowid);
         };
         stepComponent.steps = initialRow;
+        stepComponent.row_iterator = Row::Iterator(stepComponent.steps, RowTransform{});
         addAndMakeVisible(stepComponent);
         addAndMakeVisible(menuButton);
         menuButton.setButtonText("Transform...");
@@ -133,13 +137,20 @@ class RowComponent : public juce::Component
             infos.emplace_back("Retrograde Inverse", true, true);
             for (auto &transform : infos)
             {
-                for (int i = 0; i < stepComponent.steps.num_active_entries; ++i)
+                const auto &curtransform = stepComponent.row_iterator.transform;
+                for (uint16_t i = 0; i < stepComponent.steps.num_active_entries; ++i)
                 {
-                    menu.addItem(transform.text + " " + juce::String(i), [this, transform, i]() {
-                        stepComponent.steps.setTransform(i, transform.inv, transform.rev);
-                        if (OnEdited)
-                            OnEdited(rowid);
-                    });
+
+                    bool ticked = i == curtransform.transpose &&
+                                  transform.inv == curtransform.inverted &&
+                                  curtransform.reversed == transform.rev;
+                    menu.addItem(transform.text + " " + juce::String(i), true, ticked,
+                                 [this, transform, i]() {
+                                     stepComponent.row_iterator = Row::Iterator(
+                                         stepComponent.steps, {i, transform.inv, transform.rev});
+                                     if (OnEdited)
+                                         OnEdited(rowid);
+                                 });
                 }
             }
 
@@ -172,8 +183,8 @@ class VelocityRowComponent : public RowComponent
         velLowSlider.setNumDecimalPlacesToDisplay(0);
         velLowSlider.setTextBoxStyle(juce::Slider::TextEntryBoxPosition::TextBoxLeft, false, 30,
                                      24);
-        velLowSlider.setRange(0, 127,1);
-        //velLowSlider.setIncDecButtonsMode
+        velLowSlider.setRange(0, 127, 1);
+        // velLowSlider.setIncDecButtonsMode
         velLowSlider.setValue(64, juce::dontSendNotification);
         velLowSlider.onValueChange = [this]() {
             MessageToProcessor msg;

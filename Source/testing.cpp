@@ -3,7 +3,7 @@
 
 using namespace xenakios;
 
-inline void print_row(Row::TIterator &it)
+inline void print_row(Row::Iterator &it)
 {
     for (int i = 0; i < it.row->num_active_entries; ++i)
     {
@@ -16,7 +16,7 @@ inline void print_row(Row::TIterator &it)
 inline void test_row_iterator()
 {
     Row row = Row::make_chromatic(12);
-    Row::TIterator iter{row, RowTransform{0, false, false}};
+    Row::Iterator iter{row, RowTransform{0, false, false}};
     print_row(iter);
     iter = iter.with_transform({0, false, true});
     print_row(iter);

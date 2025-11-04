@@ -17,6 +17,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 {
     fifo_to_ui.reset(1024);
     fifo_to_processor.reset(1024);
+    //rows[RID_PITCHCLASS] = Row::make_chromatic(12);
     rows[RID_PITCHCLASS].num_active_entries = 12;
     for (int i = 0; i < 12; ++i)
         rows[RID_PITCHCLASS].entries[i] = (i * 7) % 12;
@@ -26,8 +27,8 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     rowRepeats = {1, 1, 1, 1};
     for (size_t i = 0; i < 4; ++i)
     {
-        rowIterators[i] = Row::Iterator(rows[i], true);
-        rowIterators[i].repetitions = rowRepeats[i];
+        rowIterators[i] = Row::Iterator(rows[i], RowTransform());
+        //rowIterators[i].repetitions = rowRepeats[i];
     }
 
     playingNotes.reserve(1024);
@@ -37,17 +38,17 @@ void AudioPluginAudioProcessor::transformRow(size_t whichRow, int transpose, boo
                                              bool reverse)
 {
     juce::ScopedLock locker(cs);
-    rows[whichRow].setTransform(transpose, invert, reverse);
+    rowIterators[whichRow].transform={(uint16_t)transpose, invert, reverse};
     row_was_changed = true;
 }
 
-void AudioPluginAudioProcessor::setRow(size_t which, Row r)
+void AudioPluginAudioProcessor::setRow(size_t which, Row r, RowTransform t)
 {
     juce::ScopedLock locker(cs);
     auto oldpos = rowIterators[which].pos;
     rows[which] = r;
-    rowIterators[which] = Row::Iterator(rows[which], true);
-    rowIterators[which].repetitions = rowRepeats[which];
+    rowIterators[which] = Row::Iterator(rows[which], t);
+    //rowIterators[which].repetitions = rowRepeats[which];
     rowIterators[which].pos = oldpos;
 }
 

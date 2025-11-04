@@ -70,7 +70,7 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     std::array<size_t, 4> rowRepeats;
     void transformRow(size_t whichRow, int transpose, bool invert, bool reverse);
 
-    void setRow(size_t which, Row r);
+    void setRow(size_t which, Row r, RowTransform t);
     juce::MidiKeyboardState keyboardState;
     juce::CriticalSection cs;
     int velocityLow = 64;
