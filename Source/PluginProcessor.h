@@ -103,7 +103,7 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     choc::fifo::SingleReaderSingleWriterFIFO<MessageToUI> fifo_to_ui;
 
     toproc_fifo_t fifo_to_processor;
-    std::atomic<bool> row_was_changed{false};
+    
     std::atomic<bool> selfSequence{true};
 
   private:

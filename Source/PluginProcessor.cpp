@@ -117,13 +117,6 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 {
     juce::ScopedNoDenormals noDenormals;
 
-    if (row_was_changed)
-    {
-        MessageToUI msg;
-        msg.opcode = 1;
-        fifo_to_ui.push(msg);
-        row_was_changed = false;
-    }
     generatedMessages.clear();
     keyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(), true);
     int triggerstatus = 0;
