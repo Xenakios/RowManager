@@ -82,8 +82,10 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     struct PendingRowInfo
     {
         size_t row_index = 0;
+        Row row;
+        RowTransform transform;
     };
-    
+    std::vector<PendingRowInfo> pending_rows;
     juce::MidiKeyboardState keyboardState;
     
     int velocityLow = 64;

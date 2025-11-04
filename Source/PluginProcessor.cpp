@@ -15,6 +15,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 #endif
       )
 {
+    pending_rows.reserve(64);
     fifo_to_ui.reset(1024);
     fifo_to_processor.reset(1024);
     // rows[RID_PITCHCLASS] = Row::make_chromatic(12);

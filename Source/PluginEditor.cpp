@@ -47,7 +47,6 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
             msg.row = rowComponents[i]->stepComponent.steps;
             msg.transform = rowComponents[i]->stepComponent.row_iterator.transform;
             processorRef.fifo_to_processor.push(msg);
-            
         };
     }
     setSize(900, 620);
@@ -76,12 +75,10 @@ void AudioPluginAudioProcessorEditor::timerCallback()
             rowComponents[RID_VELOCITY]->stepComponent.setPlayingStep(msg.velocityplaypos);
             rowComponents[RID_POLYAT]->stepComponent.setPlayingStep(msg.polyatplaypos);
         }
-        if (msg.opcode == 1)
-        {
-        }
     }
     juce::String txt;
-    txt << "playing notes " << processorRef.playingNotes.size();
+    txt << processorRef.playingNotes.size() << " playing notes ";
+    txt << processorRef.pending_rows.size() << " pending row changes";
     debugLabel.setText(txt, juce::dontSendNotification);
 }
 
