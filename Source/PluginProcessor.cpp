@@ -17,7 +17,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 {
     fifo_to_ui.reset(1024);
     fifo_to_processor.reset(1024);
-    //rows[RID_PITCHCLASS] = Row::make_chromatic(12);
+    // rows[RID_PITCHCLASS] = Row::make_chromatic(12);
     rows[RID_PITCHCLASS].num_active_entries = 12;
     for (int i = 0; i < 12; ++i)
         rows[RID_PITCHCLASS].entries[i] = (i * 7) % 12;
@@ -28,28 +28,10 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     for (size_t i = 0; i < 4; ++i)
     {
         rowIterators[i] = Row::Iterator(rows[i], RowTransform());
-        //rowIterators[i].repetitions = rowRepeats[i];
+        // rowIterators[i].repetitions = rowRepeats[i];
     }
 
     playingNotes.reserve(1024);
-}
-
-void AudioPluginAudioProcessor::transformRow(size_t whichRow, int transpose, bool invert,
-                                             bool reverse)
-{
-    juce::ScopedLock locker(cs);
-    rowIterators[whichRow].transform={(uint16_t)transpose, invert, reverse};
-    row_was_changed = true;
-}
-
-void AudioPluginAudioProcessor::setRow(size_t which, Row r, RowTransform t)
-{
-    juce::ScopedLock locker(cs);
-    auto oldpos = rowIterators[which].pos;
-    rows[which] = r;
-    rowIterators[which] = Row::Iterator(rows[which], t);
-    //rowIterators[which].repetitions = rowRepeats[which];
-    rowIterators[which].pos = oldpos;
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor() {}
@@ -133,7 +115,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                                              juce::MidiBuffer &midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
-    juce::ScopedLock locker(cs);
+
     if (row_was_changed)
     {
         MessageToUI msg;
@@ -166,21 +148,31 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     MessageToProcessor amsg;
     while (fifo_to_processor.pop(amsg))
     {
-        if (amsg.opcode == 0)
+        if (amsg.opcode == MessageToProcessor::OP_ChangeRow)
         {
-            if (amsg.par0 == 0)
-            {
-                selfSequence = false;
-                triggerstatus = 3;
-            }
-            if (amsg.par0 == 1)
-            {
-                selfSequence = true;
-            }
+            auto oldpos = rowIterators[amsg.row_index].pos;
+            rows[amsg.row_index] = amsg.row;
+            rowIterators[amsg.row_index] = Row::Iterator(rows[amsg.row_index], amsg.transform);
+            rowIterators[amsg.row_index].pos = oldpos;
         }
-        if (amsg.opcode == 1)
+        if (amsg.opcode == MessageToProcessor::OP_ChangeIntParameter)
         {
-            velocityLow = amsg.par0;
+            if (amsg.par_index == 0)
+            {
+                if (amsg.par_ivalue == 0)
+                {
+                    selfSequence = false;
+                    triggerstatus = 3;
+                }
+                if (amsg.par_ivalue == 1)
+                {
+                    selfSequence = true;
+                }
+            }
+            if (amsg.par_index == 1)
+            {
+                velocityLow = amsg.par_ivalue;
+            }
         }
     }
     for (auto &pm : playingNotes)

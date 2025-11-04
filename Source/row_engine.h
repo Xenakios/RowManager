@@ -60,7 +60,7 @@ class Row
         return result;
     }
     std::array<uint16_t, maxElements> entries;
-    size_t num_active_entries = 0;
+    uint16_t num_active_entries = 0;
 
     bool isValid() const
     {
@@ -94,7 +94,7 @@ class Row
         }
         uint16_t next()
         {
-            auto rpos = position_real(pos);
+            auto rpos = get_transformed_position(pos);
             uint16_t result = (row->entries[rpos] + transform.transpose) % row->num_active_entries;
             if (transform.inverted)
                 result = (row->num_active_entries - result) % row->num_active_entries;
@@ -103,13 +103,12 @@ class Row
                 pos = 0;
             return result;
         }
-        uint16_t position_real(uint64_t p)
+        uint16_t get_transformed_position(uint64_t p)
         {
             if (transform.reversed)
                 return (row->num_active_entries - 1) - p;
             return p;
         }
     };
-    
 };
 } // namespace xenakios

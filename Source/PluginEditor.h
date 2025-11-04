@@ -188,8 +188,9 @@ class VelocityRowComponent : public RowComponent
         velLowSlider.setValue(64, juce::dontSendNotification);
         velLowSlider.onValueChange = [this]() {
             MessageToProcessor msg;
-            msg.opcode = 1;
-            msg.par0 = velLowSlider.getValue();
+            msg.opcode = MessageToProcessor::OP_ChangeIntParameter;
+            msg.par_index = 1;
+            msg.par_ivalue = velLowSlider.getValue();
             toproc_fifo.push(msg);
         };
     }

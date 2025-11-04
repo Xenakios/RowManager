@@ -19,7 +19,9 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     selfSequenceToggle.setToggleState(processorRef.selfSequence, juce::dontSendNotification);
     selfSequenceToggle.onClick = [this]() {
         MessageToProcessor msg;
-        msg.par0 = selfSequenceToggle.getToggleState();
+        msg.opcode = MessageToProcessor::OP_ChangeIntParameter;
+        msg.par_index = 0;
+        msg.par_ivalue = selfSequenceToggle.getToggleState();
         processorRef.fifo_to_processor.push(msg);
     };
 
@@ -39,8 +41,13 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     {
         addAndMakeVisible(rowComponents[i].get());
         rowComponents[i]->OnEdited = [this, i](size_t id) {
-            processorRef.setRow(id, rowComponents[i]->stepComponent.steps,
-                                rowComponents[i]->stepComponent.row_iterator.transform);
+            MessageToProcessor msg;
+            msg.opcode = MessageToProcessor::OP_ChangeRow;
+            msg.row_index = id;
+            msg.row = rowComponents[i]->stepComponent.steps;
+            msg.transform = rowComponents[i]->stepComponent.row_iterator.transform;
+            processorRef.fifo_to_processor.push(msg);
+            
         };
     }
     setSize(900, 620);

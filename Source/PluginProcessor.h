@@ -7,6 +7,8 @@
 #include "row_engine.h"
 #include "containers/choc_SingleReaderSingleWriterFIFO.h"
 
+using namespace xenakios;
+
 struct MessageToUI
 {
     int opcode = 0;
@@ -19,11 +21,19 @@ struct MessageToUI
 
 struct MessageToProcessor
 {
-    int opcode = 0;
-    int par0 = 0;
+    enum Op
+    {
+        OP_None,
+        OP_ChangeRow,
+        OP_ChangeIntParameter
+    };
+    Op opcode = OP_None;
+    int par_index = 0;
+    int par_ivalue = 0;
+    uint16_t row_index = 0;
+    Row row;
+    RowTransform transform;
 };
-
-using namespace xenakios;
 
 using toproc_fifo_t = choc::fifo::SingleReaderSingleWriterFIFO<MessageToProcessor>;
 
@@ -68,11 +78,14 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     std::array<Row, 4> rows;
     std::array<Row::Iterator, 4> rowIterators;
     std::array<size_t, 4> rowRepeats;
-    void transformRow(size_t whichRow, int transpose, bool invert, bool reverse);
-
-    void setRow(size_t which, Row r, RowTransform t);
+    
+    struct PendingRowInfo
+    {
+        size_t row_index = 0;
+    };
+    
     juce::MidiKeyboardState keyboardState;
-    juce::CriticalSection cs;
+    
     int velocityLow = 64;
     struct NoteInfo
     {
@@ -86,7 +99,7 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     int pulselen = 11025;
     int notelen = 11025;
     choc::fifo::SingleReaderSingleWriterFIFO<MessageToUI> fifo_to_ui;
-    
+
     toproc_fifo_t fifo_to_processor;
     std::atomic<bool> row_was_changed{false};
     std::atomic<bool> selfSequence{true};
