@@ -17,6 +17,7 @@ struct MessageToUI
     int octaveplaypos = 0;
     int velocityplaypos = 0;
     int polyatplaypos = 0;
+    int tdeltaplaypos = 0;
 };
 
 struct MessageToProcessor
@@ -75,9 +76,9 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     //==============================================================================
     void getStateInformation(juce::MemoryBlock &destData) override;
     void setStateInformation(const void *data, int sizeInBytes) override;
-    std::array<Row, 4> rows;
-    std::array<Row::Iterator, 4> rowIterators;
-    std::array<size_t, 4> rowRepeats;
+    std::array<Row, RID_LAST> rows;
+    std::array<Row::Iterator, RID_LAST> rowIterators;
+    std::array<size_t, RID_LAST> rowRepeats;
     
     struct PendingRowInfo
     {

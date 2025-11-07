@@ -13,6 +13,7 @@ namespace xenakios
 enum RowID
 {
     RID_PITCHCLASS,
+    RID_DELTATIME,
     RID_VELOCITY,
     RID_OCTAVE,
     RID_POLYAT,

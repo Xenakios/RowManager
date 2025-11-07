@@ -30,6 +30,9 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     rowComponents.push_back(std::make_unique<RowComponent>("Pitch Class", RID_PITCHCLASS,
                                                            processorRef.rows[RID_PITCHCLASS],
                                                            processorRef.fifo_to_processor));
+    rowComponents.push_back(std::make_unique<RowComponent>("Onset difference", RID_DELTATIME,
+                                                           processorRef.rows[RID_DELTATIME],
+                                                           processorRef.fifo_to_processor));
     rowComponents.push_back(std::make_unique<RowComponent>(
         "Octave", RID_OCTAVE, processorRef.rows[RID_OCTAVE], processorRef.fifo_to_processor));
 
@@ -49,7 +52,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
             processorRef.fifo_to_processor.push(msg);
         };
     }
-    setSize(900, 620);
+    setSize(1000, 800);
     startTimer(100);
 }
 
@@ -74,6 +77,7 @@ void AudioPluginAudioProcessorEditor::timerCallback()
             rowComponents[RID_OCTAVE]->stepComponent.setPlayingStep(msg.octaveplaypos);
             rowComponents[RID_VELOCITY]->stepComponent.setPlayingStep(msg.velocityplaypos);
             rowComponents[RID_POLYAT]->stepComponent.setPlayingStep(msg.polyatplaypos);
+            rowComponents[RID_DELTATIME]->stepComponent.setPlayingStep(msg.tdeltaplaypos);
         }
     }
     juce::String txt;
@@ -98,9 +102,11 @@ void AudioPluginAudioProcessorEditor::resized()
     yoffs += 25;
     rowComponents[0]->setBounds(1, yoffs, getWidth() - 2, 175);
     yoffs += 178;
-    rowComponents[1]->setBounds(1, yoffs, getWidth() / 2 - 2, 175);
-    rowComponents[2]->setBounds(1 + getWidth() / 2, yoffs, getWidth() / 2 - 2, 175);
+    rowComponents[1]->setBounds(1, yoffs, getWidth() - 2, 175);
     yoffs += 178;
-    rowComponents[3]->setBounds(1, yoffs, getWidth(), 175);
+    rowComponents[2]->setBounds(1, yoffs, getWidth() / 2 - 2, 175);
+    rowComponents[3]->setBounds(1 + getWidth() / 2, yoffs, getWidth() / 2 - 2, 175);
+    yoffs += 178;
+    rowComponents[4]->setBounds(1, yoffs, getWidth(), 175);
     keyboardComponent.setBounds(1, getBottom() - 50, getWidth() - 2, 50);
 }

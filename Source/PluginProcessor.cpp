@@ -22,11 +22,12 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     rows[RID_PITCHCLASS].num_active_entries = 12;
     for (int i = 0; i < 12; ++i)
         rows[RID_PITCHCLASS].entries[i] = (i * 7) % 12;
+    rows[RID_DELTATIME] = Row::make_from_init_list({4, 3, 2, 1, 0});
     rows[RID_OCTAVE] = Row::make_from_init_list({3, 2, 1, 0});
     rows[RID_VELOCITY] = Row::make_from_init_list({2, 3, 0, 1});
     rows[RID_POLYAT] = Row::make_from_init_list({2, 3, 0, 1, 5, 4});
     rowRepeats = {1, 1, 1, 1};
-    for (size_t i = 0; i < 4; ++i)
+    for (size_t i = 0; i < RID_LAST; ++i)
     {
         rowIterators[i] = Row::Iterator(rows[i], RowTransform());
         // rowIterators[i].repetitions = rowRepeats[i];
