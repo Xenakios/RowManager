@@ -52,6 +52,25 @@ class Row
             result.entries[i] = *(ilist.begin() + i);
         return result;
     }
+    static Row make_all_interval(size_t numentries)
+    {
+        Row result;
+        result.num_active_entries = numentries;
+        size_t absinterval = numentries - 1;
+        int direction = 1;
+        size_t elem = 0;
+        for (size_t i = 0; i < numentries; ++i)
+        {
+            result.entries[i] = elem;
+            elem += absinterval * direction;
+            absinterval = absinterval - 1;
+            if (i % 2 == 0)
+                direction = -1;
+            else
+                direction = 1;
+        }
+        return result;
+    }
     static Row make_chromatic(size_t numentries)
     {
         Row result;
