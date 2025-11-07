@@ -18,11 +18,11 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     pending_rows.reserve(64);
     fifo_to_ui.reset(1024);
     fifo_to_processor.reset(1024);
-    // rows[RID_PITCHCLASS] = Row::make_chromatic(12);
-    rows[RID_PITCHCLASS].num_active_entries = 12;
-    for (int i = 0; i < 12; ++i)
-        rows[RID_PITCHCLASS].entries[i] = (i * 7) % 12;
-    rows[RID_DELTATIME] = Row::make_from_init_list({4, 3, 2, 1, 0});
+    rows[RID_PITCHCLASS] = Row::make_chromatic(12);
+    //rows[RID_PITCHCLASS].num_active_entries = 12;
+    //for (int i = 0; i < 12; ++i)
+    //    rows[RID_PITCHCLASS].entries[i] = (i * 7) % 12;
+    rows[RID_DELTATIME] = Row::make_from_init_list({4, 3, 2, 0, 1});
     rows[RID_OCTAVE] = Row::make_from_init_list({3, 2, 1, 0});
     rows[RID_VELOCITY] = Row::make_from_init_list({2, 3, 0, 1});
     rows[RID_POLYAT] = Row::make_from_init_list({2, 3, 0, 1, 5, 4});
@@ -201,7 +201,12 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         msg.octaveplaypos = rowIterators[RID_OCTAVE].pos;
         msg.velocityplaypos = rowIterators[RID_VELOCITY].pos;
         msg.polyatplaypos = rowIterators[RID_POLYAT].pos;
+        msg.tdeltaplaypos = rowIterators[RID_DELTATIME].pos;
         int polyat = rowIterators[RID_POLYAT].next();
+        double plen = (1 + rowIterators[RID_DELTATIME].next());
+        double bpm = 120.0;
+        plen = (60.0 / bpm / 4.0) * plen;
+        pulselen = static_cast<int>(getSampleRate() * plen);
         int octave = rowIterators[RID_OCTAVE].next();
         int note = 24 + octave * rows[RID_PITCHCLASS].num_active_entries +
                    rowIterators[RID_PITCHCLASS].next();
