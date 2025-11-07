@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <print>
 #include "row_engine.h"
 #include "audio/choc_AudioFileFormat.h"
@@ -26,20 +27,35 @@ inline void test_row_iterator()
 inline void test_choc_scandinavian()
 {
     choc::audio::WAVAudioFileFormat<true> wavformat;
-    choc::audio::AudioFileProperties props;
-    props.bitDepth = choc::audio::BitDepth::float32;
-    props.numChannels = 1;
-    props.sampleRate = 44100;
-    auto writer = wavformat.createWriter(
-        R"(C:\MusicAudio\sourcesamples\test_signals\tones\choc_test_öäå.wav)", props);
-    if (writer)
+    std::vector<std::string> filenamestotest{
+        R"(C:\MusicAudio\sourcesamples\test_signals\tones\😮_count_🧨.wav)",
+        R"(C:\MusicAudio\sourcesamples\test_signals\tones\count.wav)",
+        R"(C:\MusicAudio\sourcesamples\test_signals\tones\ÄÖÅ_count_äöå.wav)"};
+    std::print("testing with std::string paths directly\n");
+    for (auto &path : filenamestotest)
     {
-        
+        auto reader = wavformat.createReader(path);
+        if (reader)
+            std::print("{} [OK]\n", path);
+        else
+            std::print("{} [FAILED]\n", path);
+    }
+    std::print("testing with custom created std::ifstream instances from paths\n");
+    for (auto &path : filenamestotest)
+    {
+        std::filesystem::path infilepath{std::filesystem::u8path(path)};
+        std::shared_ptr<std::istream> is{new std::ifstream(infilepath, std::ios::binary)};
+        auto reader = wavformat.createReader(is);
+        if (reader)
+            std::print("{} [OK]\n", path);
+        else
+            std::print("{} [FAILED]\n", path);
     }
 }
 
 int main()
 {
+    test_choc_scandinavian();
     // test_row_iterator();
     return 0;
 }
