@@ -77,11 +77,11 @@ void AudioPluginAudioProcessorEditor::timerCallback()
     {
         if (msg.opcode == 0)
         {
-            rowComponents[RID_PITCHCLASS]->stepComponent.setPlayingStep(msg.pitchclassplaypos);
-            rowComponents[RID_OCTAVE]->stepComponent.setPlayingStep(msg.octaveplaypos);
-            rowComponents[RID_VELOCITY]->stepComponent.setPlayingStep(msg.velocityplaypos);
-            rowComponents[RID_POLYAT]->stepComponent.setPlayingStep(msg.polyatplaypos);
-            rowComponents[RID_DELTATIME]->stepComponent.setPlayingStep(msg.tdeltaplaypos);
+            rowComponents[RID_PITCHCLASS]->stepComponent.setPlayingStep(msg.voice_index, msg.pitchclassplaypos);
+            rowComponents[RID_OCTAVE]->stepComponent.setPlayingStep(msg.voice_index, msg.octaveplaypos);
+            rowComponents[RID_VELOCITY]->stepComponent.setPlayingStep(msg.voice_index, msg.velocityplaypos);
+            rowComponents[RID_POLYAT]->stepComponent.setPlayingStep(msg.voice_index, msg.polyatplaypos);
+            rowComponents[RID_DELTATIME]->stepComponent.setPlayingStep(msg.voice_index, msg.tdeltaplaypos);
         }
         if (msg.opcode == 100)
         {

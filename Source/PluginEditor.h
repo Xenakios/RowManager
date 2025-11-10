@@ -13,12 +13,12 @@
 class MultiStepComponent : public juce::Component
 {
   public:
-    MultiStepComponent() {}
+    MultiStepComponent() { std::fill(playingsteps.begin(), playingsteps.end(), -1); }
     bool readonly = true;
-    int playingstep = -1;
-    void setPlayingStep(int i)
+    std::array<int, max_poly_voices> playingsteps;
+    void setPlayingStep(int voice_index, int i)
     {
-        playingstep = i;
+        playingsteps[voice_index] = i;
         repaint();
     }
     std::function<void()> OnEdited = nullptr;
@@ -74,26 +74,24 @@ class MultiStepComponent : public juce::Component
                 g.setColour(juce::Colours::yellow);
             else
             {
-                if (i == playingstep)
-                    g.setColour(juce::Colours::green);
-                else
-                    g.setColour(juce::Colours::green.darker());
+                g.setColour(juce::Colours::green);
             }
 
             float steph = juce::jmap<double>(steps.entries[i], 0, steps.num_active_entries,
                                              getHeight() - 2.0, 0);
             g.fillRect((float)1.0 + i * stepw, steph, stepw / 2.0, getHeight() - steph);
-            if (i == playingstep)
-                g.setColour(juce::Colours::grey);
-            else
-                g.setColour(juce::Colours::darkgrey);
+
             float iterstepw = stepw / 2 / num_active_voices;
             for (int j = 0; j < num_active_voices; ++j)
             {
+                if (i == playingsteps[j])
+                    g.setColour(juce::Colours::grey);
+                else
+                    g.setColour(juce::Colours::darkgrey);
                 row_iterators[j].set_position(i);
                 steph = juce::jmap<double>(row_iterators[j].next(), 0, steps.num_active_entries,
                                            getHeight() - 2.0, 0);
-                g.fillRect((float)1.0 + i * stepw + stepw/2.0f + iterstepw * j, steph, iterstepw,
+                g.fillRect((float)1.0 + i * stepw + stepw / 2.0f + iterstepw * j, steph, iterstepw,
                            getHeight() - steph);
             }
 
