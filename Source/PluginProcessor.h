@@ -26,17 +26,15 @@ struct MessageToUI
     {
         OP_None,
         OP_StepPositionChanged,
-        OP_VoiceCountChanged
+        OP_VoiceCountChanged,
+        OP_RowTransformChanged
     };
     Op opcode = OP_None;
+    RowTransform transform;
     int par0 = 0;
     int voice_index = 0;
-    int pitchclassplaypos = 0;
     int soundingpitch = 0;
-    int octaveplaypos = 0;
-    int velocityplaypos = 0;
-    int polyatplaypos = 0;
-    int tdeltaplaypos = 0;
+    std::array<int16_t, RID_LAST> playpositions;
 };
 
 struct MessageToProcessor
@@ -109,7 +107,7 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     size_t num_active_voices = 2;
     std::vector<PendingRowInfo> pending_rows;
     juce::MidiKeyboardState keyboardState;
-
+    std::atomic<bool> send_ui_updates{false};
     int velocityLow = 64;
     struct NoteInfo
     {

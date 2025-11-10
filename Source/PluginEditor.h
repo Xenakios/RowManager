@@ -16,9 +16,9 @@ class MultiStepComponent : public juce::Component
     MultiStepComponent() { std::fill(playingsteps.begin(), playingsteps.end(), -1); }
     bool readonly = true;
     std::array<int, max_poly_voices> playingsteps;
-    void setPlayingStep(int voice_index, int i)
+    void setPlayingStep(int voice_index, int p)
     {
-        playingsteps[voice_index] = i;
+        playingsteps[voice_index] = p;
         repaint();
     }
     std::function<void()> OnEdited = nullptr;

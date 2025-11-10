@@ -90,10 +90,7 @@ void AudioPluginAudioProcessor::changeProgramName(int index, const juce::String 
 //==============================================================================
 void AudioPluginAudioProcessor::prepareToPlay(double /*sampleRate*/, int /*samplesPerBlock*/)
 {
-    MessageToUI msg;
-    msg.opcode = MessageToUI::OP_VoiceCountChanged;
-    msg.par0 = num_active_voices;
-    fifo_to_ui.push(msg);
+    send_ui_updates = true;
 }
 
 void AudioPluginAudioProcessor::releaseResources() {}
@@ -210,6 +207,16 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
             }
         }
     }
+    if (send_ui_updates)
+    {
+        MessageToUI msg;
+        msg.opcode = MessageToUI::OP_VoiceCountChanged;
+        msg.par0 = num_active_voices;
+        fifo_to_ui.push(msg);
+        msg.opcode = MessageToUI::OP_RowTransformChanged;
+        fifo_to_ui.push(msg);
+        send_ui_updates = false;
+    }
     double bpm = 120.0;
     for (size_t i = 0; i < num_active_voices; ++i)
     {
@@ -218,11 +225,11 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
             MessageToUI msg;
             msg.opcode = MessageToUI::OP_StepPositionChanged;
             msg.voice_index = i;
-            msg.pitchclassplaypos = voices[i].rowIterators[RID_PITCHCLASS].pos;
-            msg.octaveplaypos = voices[i].rowIterators[RID_OCTAVE].pos;
-            msg.velocityplaypos = voices[i].rowIterators[RID_VELOCITY].pos;
-            msg.polyatplaypos = voices[i].rowIterators[RID_POLYAT].pos;
-            msg.tdeltaplaypos = voices[i].rowIterators[RID_DELTATIME].pos;
+            for (int rid = 0; rid < RID_LAST; ++rid)
+            {
+                msg.playpositions[rid] = voices[i].rowIterators[rid].pos;
+            }
+
             int polyat = voices[i].rowIterators[RID_POLYAT].next();
             double plen = (1 + voices[i].rowIterators[RID_DELTATIME].next());
 
@@ -262,6 +269,7 @@ bool AudioPluginAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor *AudioPluginAudioProcessor::createEditor()
 {
+    send_ui_updates = true;
     return new AudioPluginAudioProcessorEditor(*this);
 }
 

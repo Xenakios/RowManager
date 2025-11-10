@@ -77,22 +77,23 @@ void AudioPluginAudioProcessorEditor::timerCallback()
     {
         if (msg.opcode == MessageToUI::OP_StepPositionChanged)
         {
-            rowComponents[RID_PITCHCLASS]->stepComponent.setPlayingStep(msg.voice_index,
-                                                                        msg.pitchclassplaypos);
-            rowComponents[RID_OCTAVE]->stepComponent.setPlayingStep(msg.voice_index,
-                                                                    msg.octaveplaypos);
-            rowComponents[RID_VELOCITY]->stepComponent.setPlayingStep(msg.voice_index,
-                                                                      msg.velocityplaypos);
-            rowComponents[RID_POLYAT]->stepComponent.setPlayingStep(msg.voice_index,
-                                                                    msg.polyatplaypos);
-            rowComponents[RID_DELTATIME]->stepComponent.setPlayingStep(msg.voice_index,
-                                                                       msg.tdeltaplaypos);
+            for (auto &c : rowComponents)
+            {
+                c->stepComponent.setPlayingStep(msg.voice_index, msg.playpositions[c->rowid]);
+            }
         }
         if (msg.opcode == MessageToUI::OP_VoiceCountChanged)
         {
             for (auto &c : rowComponents)
             {
                 c->stepComponent.num_active_voices = msg.par0;
+            }
+        }
+        if (msg.opcode == MessageToUI::OP_RowTransformChanged)
+        {
+            for (auto &c : rowComponents)
+            {
+                // c->
             }
         }
     }
