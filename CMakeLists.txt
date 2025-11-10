@@ -34,12 +34,6 @@ target_sources(RowManager
         Source/PluginEditor.cpp
         Source/PluginProcessor.cpp)
 
-# `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
-# project, these might be passed in the 'Preprocessor Definitions' field. JUCE modules also make use
-# of compile definitions to switch certain features on/off, so if there's a particular feature you
-# need that's not on by default, check the module header for the correct flag to set here. These
-# definitions will be visible both to your code, and also the JUCE module code, so for new
-# definitions, pick unique names that are unlikely to collide! This is a standard CMake command.
 target_compile_options(RowManager PRIVATE -Werror=return-type)
 target_compile_definitions(RowManager
     PUBLIC
@@ -56,12 +50,6 @@ target_compile_definitions(RowManager
 # Conversion to binary-data will happen when your target is built.
 
 # juce_add_binary_data(AudioPluginData SOURCES ...)
-
-# `target_link_libraries` links libraries and JUCE modules to other libraries or executables. Here,
-# we're linking our executable target to the `juce::juce_audio_utils` module. Inter-module
-# dependencies are resolved automatically, so `juce_core`, `juce_events` and so on will also be
-# linked automatically. If we'd generated a binary data target above, we would need to link to it
-# here too. This is a standard CMake command.
 
 target_link_libraries(RowManager
     PRIVATE
