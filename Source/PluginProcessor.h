@@ -9,9 +9,22 @@
 
 using namespace xenakios;
 
+constexpr size_t max_poly_voices = 4;
+
+struct Voice
+{
+    std::array<Row::Iterator, RID_LAST> rowIterators;
+    int playpos = 0;
+    int pulselen = 11025;
+    int notelen = 11025;
+    int outchan = 0;
+};
+
 struct MessageToUI
 {
     int opcode = 0;
+    int par0 = 0;
+    int voice_index = 0;
     int pitchclassplaypos = 0;
     int soundingpitch = 0;
     int octaveplaypos = 0;
@@ -26,9 +39,11 @@ struct MessageToProcessor
     {
         OP_None,
         OP_ChangeRow,
+        OP_ChangeTransform,
         OP_ChangeIntParameter
     };
     Op opcode = OP_None;
+    int voice_index = 0;
     int par_index = 0;
     int par_ivalue = 0;
     uint16_t row_index = 0;
@@ -41,11 +56,9 @@ using toproc_fifo_t = choc::fifo::SingleReaderSingleWriterFIFO<MessageToProcesso
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
 {
   public:
-    //==============================================================================
     AudioPluginAudioProcessor();
     ~AudioPluginAudioProcessor() override;
 
-    //==============================================================================
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
 
@@ -77,18 +90,20 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     void getStateInformation(juce::MemoryBlock &destData) override;
     void setStateInformation(const void *data, int sizeInBytes) override;
     std::array<Row, RID_LAST> rows;
-    std::array<Row::Iterator, RID_LAST> rowIterators;
+    // std::array<Row::Iterator, RID_LAST> rowIterators;
     std::array<size_t, RID_LAST> rowRepeats;
-    
+
     struct PendingRowInfo
     {
         size_t row_index = 0;
         Row row;
         RowTransform transform;
     };
+    std::array<Voice, max_poly_voices> voices;
+    size_t num_active_voices = 2;
     std::vector<PendingRowInfo> pending_rows;
     juce::MidiKeyboardState keyboardState;
-    
+
     int velocityLow = 64;
     struct NoteInfo
     {
@@ -98,13 +113,13 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     };
     std::vector<NoteInfo> playingNotes;
     juce::MidiBuffer generatedMessages;
-    int playpos = 0;
-    int pulselen = 11025;
+    // int playpos = 0;
+    // int pulselen = 11025;
     int notelen = 11025;
     choc::fifo::SingleReaderSingleWriterFIFO<MessageToUI> fifo_to_ui;
 
     toproc_fifo_t fifo_to_processor;
-    
+
     std::atomic<bool> selfSequence{true};
 
   private:

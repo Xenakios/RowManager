@@ -44,12 +44,16 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     {
         addAndMakeVisible(rowComponents[i].get());
         rowComponents[i]->OnEdited = [this, i](size_t id) {
-            MessageToProcessor msg;
-            msg.opcode = MessageToProcessor::OP_ChangeRow;
-            msg.row_index = id;
-            msg.row = rowComponents[i]->stepComponent.steps;
-            msg.transform = rowComponents[i]->stepComponent.row_iterator.transform;
-            processorRef.fifo_to_processor.push(msg);
+            for (int j = 0; j < max_poly_voices; ++j)
+            {
+                MessageToProcessor msg;
+                msg.opcode = MessageToProcessor::OP_ChangeRow;
+                msg.row_index = id;
+                msg.voice_index = j;
+                msg.row = rowComponents[i]->stepComponent.steps;
+                msg.transform = rowComponents[i]->stepComponent.row_iterators[j].transform;
+                processorRef.fifo_to_processor.push(msg);
+            }
         };
     }
     setSize(1000, 800);
@@ -78,6 +82,13 @@ void AudioPluginAudioProcessorEditor::timerCallback()
             rowComponents[RID_VELOCITY]->stepComponent.setPlayingStep(msg.velocityplaypos);
             rowComponents[RID_POLYAT]->stepComponent.setPlayingStep(msg.polyatplaypos);
             rowComponents[RID_DELTATIME]->stepComponent.setPlayingStep(msg.tdeltaplaypos);
+        }
+        if (msg.opcode == 100)
+        {
+            for (auto &c : rowComponents)
+            {
+                c->stepComponent.num_active_voices = msg.par0;
+            }
         }
     }
     juce::String txt;

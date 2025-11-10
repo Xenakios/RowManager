@@ -27,7 +27,7 @@ inline void test_row_iterator()
 inline void test_choc_scandinavian()
 {
     choc::audio::WAVAudioFileFormat<true> wavformat;
-    std::vector<std::string> filenamestotest{
+    std::vector<std::filesystem::path> filenamestotest{
         R"(C:\MusicAudio\sourcesamples\test_signals\tones\😮_count_🧨.wav)",
         R"(C:\MusicAudio\sourcesamples\test_signals\tones\count.wav)",
         R"(C:\MusicAudio\sourcesamples\test_signals\tones\ÄÖÅ_count_äöå.wav)"};
@@ -36,20 +36,20 @@ inline void test_choc_scandinavian()
     {
         auto reader = wavformat.createReader(path);
         if (reader)
-            std::print("{} [OK]\n", path);
+            std::print("{} [OK]\n", path.string());
         else
-            std::print("{} [FAILED]\n", path);
+            std::print("{} [FAILED]\n", path.string());
     }
     std::print("testing with custom created std::ifstream instances from paths\n");
     for (auto &path : filenamestotest)
     {
-        std::filesystem::path infilepath{std::filesystem::u8path(path)};
-        std::shared_ptr<std::istream> is{new std::ifstream(infilepath, std::ios::binary)};
+        //std::filesystem::path infilepath{std::filesystem::u8path(path)};
+        std::shared_ptr<std::istream> is{new std::ifstream(path, std::ios::binary)};
         auto reader = wavformat.createReader(is);
         if (reader)
-            std::print("{} [OK]\n", path);
+            std::print("{} [OK]\n", path.string());
         else
-            std::print("{} [FAILED]\n", path);
+            std::print("{} [FAILED]\n", path.string());
     }
 }
 

@@ -87,10 +87,16 @@ class MultiStepComponent : public juce::Component
                 g.setColour(juce::Colours::grey);
             else
                 g.setColour(juce::Colours::darkgrey);
-            row_iterator.set_position(i);
-            steph = juce::jmap<double>(row_iterator.next(), 0, steps.num_active_entries,
-                                       getHeight() - 2.0, 0);
-            g.fillRect((float)1.0 + i * stepw + stepw / 2, steph, stepw / 2, getHeight() - steph);
+            float iterstepw = stepw / 2 / num_active_voices;
+            for (int j = 0; j < num_active_voices; ++j)
+            {
+                row_iterators[j].set_position(i);
+                steph = juce::jmap<double>(row_iterators[j].next(), 0, steps.num_active_entries,
+                                           getHeight() - 2.0, 0);
+                g.fillRect((float)1.0 + i * stepw + stepw/2.0f + iterstepw * j, steph, iterstepw,
+                           getHeight() - steph);
+            }
+
             g.setColour(juce::Colours::white);
 
             g.drawText(juce::String(steps.entries[i]),
@@ -100,7 +106,8 @@ class MultiStepComponent : public juce::Component
     }
 
     Row steps;
-    Row::Iterator row_iterator;
+    std::array<Row::Iterator, max_poly_voices> row_iterators;
+    int num_active_voices = 1;
 
   private:
     int draggingIndex = -1;
@@ -124,7 +131,11 @@ class RowComponent : public juce::Component
                 OnEdited(rowid);
         };
         stepComponent.steps = initialRow;
-        stepComponent.row_iterator = Row::Iterator(stepComponent.steps, RowTransform{});
+        for (size_t i = 0; i < max_poly_voices; ++i)
+        {
+            stepComponent.row_iterators[i] = Row::Iterator(stepComponent.steps, RowTransform{});
+        }
+
         addAndMakeVisible(stepComponent);
         addAndMakeVisible(menuButton);
         menuButton.setButtonText("Transform...");
@@ -141,25 +152,30 @@ class RowComponent : public juce::Component
             infos.emplace_back("Retrograde", false, true);
             infos.emplace_back("Inverse", true, false);
             infos.emplace_back("Retrograde Inverse", true, true);
-            for (auto &transform : infos)
+            for (size_t j = 0; j < max_poly_voices; ++j)
             {
-                const auto &curtransform = stepComponent.row_iterator.transform;
-                for (uint16_t i = 0; i < stepComponent.steps.num_active_entries; ++i)
+                juce::PopupMenu voicemenu;
+                for (auto &transform : infos)
                 {
+                    const auto &curtransform = stepComponent.row_iterators[j].transform;
+                    for (uint16_t i = 0; i < stepComponent.steps.num_active_entries; ++i)
+                    {
 
-                    bool ticked = i == curtransform.transpose &&
-                                  transform.inv == curtransform.inverted &&
-                                  curtransform.reversed == transform.rev;
-                    menu.addItem(transform.text + " " + juce::String(i), true, ticked,
-                                 [this, transform, i]() {
-                                     stepComponent.row_iterator = Row::Iterator(
-                                         stepComponent.steps, {i, transform.inv, transform.rev});
-                                     if (OnEdited)
-                                         OnEdited(rowid);
-                                 });
+                        bool ticked = i == curtransform.transpose &&
+                                      transform.inv == curtransform.inverted &&
+                                      curtransform.reversed == transform.rev;
+                        voicemenu.addItem(transform.text + " " + juce::String(i), true, ticked,
+                                          [this, transform, i, j]() {
+                                              stepComponent.row_iterators[j] =
+                                                  Row::Iterator(stepComponent.steps,
+                                                                {i, transform.inv, transform.rev});
+                                              if (OnEdited)
+                                                  OnEdited(rowid);
+                                          });
+                    }
                 }
+                menu.addSubMenu("Voice " + juce::String(j + 1), voicemenu);
             }
-
             menu.showMenuAsync(juce::PopupMenu::Options{});
         };
     }

@@ -27,10 +27,13 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     rows[RID_VELOCITY] = Row::make_from_init_list({2, 3, 0, 1});
     rows[RID_POLYAT] = Row::make_from_init_list({2, 3, 0, 1, 5, 4});
     rowRepeats = {1, 1, 1, 1};
-    for (size_t i = 0; i < RID_LAST; ++i)
+    for (size_t i = 0; i < max_poly_voices; ++i)
     {
-        rowIterators[i] = Row::Iterator(rows[i], RowTransform());
-        // rowIterators[i].repetitions = rowRepeats[i];
+        for (size_t j = 0; j < RID_LAST; ++j)
+        {
+            voices[i].rowIterators[j] = Row::Iterator(rows[j], RowTransform());
+            // rowIterators[i].repetitions = rowRepeats[i];
+        }
     }
 
     playingNotes.reserve(1024);
@@ -85,7 +88,13 @@ void AudioPluginAudioProcessor::changeProgramName(int index, const juce::String 
 }
 
 //==============================================================================
-void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {}
+void AudioPluginAudioProcessor::prepareToPlay(double /*sampleRate*/, int /*samplesPerBlock*/)
+{
+    MessageToUI msg;
+    msg.opcode = 100;
+    msg.par0 = num_active_voices;
+    fifo_to_ui.push(msg);
+}
 
 void AudioPluginAudioProcessor::releaseResources() {}
 
@@ -116,11 +125,13 @@ bool AudioPluginAudioProcessor::isBusesLayoutSupported(const BusesLayout &layout
 void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                                              juce::MidiBuffer &midiMessages)
 {
+    jassert(num_active_voices <= max_poly_voices);
     juce::ScopedNoDenormals noDenormals;
 
     generatedMessages.clear();
     keyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(), true);
-    int triggerstatus = 0;
+    std::array<int, max_poly_voices> triggerstatuses;
+    std::fill(triggerstatuses.begin(), triggerstatuses.end(), 0);
 
     for (const juce::MidiMessageMetadata metadata : midiMessages)
     {
@@ -129,14 +140,14 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         {
             if (msg.getNoteNumber() == 48)
             {
-                triggerstatus = 1;
+                // triggerstatus = 1;
             }
         }
         if (msg.isNoteOff())
         {
             if (msg.getNoteNumber() == 48)
             {
-                triggerstatus = 3;
+                // triggerstatus = 3;
             }
         }
     }
@@ -145,10 +156,12 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     {
         if (amsg.opcode == MessageToProcessor::OP_ChangeRow)
         {
-            auto oldpos = rowIterators[amsg.row_index].pos;
             rows[amsg.row_index] = amsg.row;
-            rowIterators[amsg.row_index] = Row::Iterator(rows[amsg.row_index], amsg.transform);
-            rowIterators[amsg.row_index].pos = oldpos;
+
+            auto oldpos = voices[amsg.voice_index].rowIterators[amsg.row_index].pos;
+            voices[amsg.voice_index].rowIterators[amsg.row_index] =
+                Row::Iterator(rows[amsg.row_index], amsg.transform);
+            voices[amsg.voice_index].rowIterators[amsg.row_index].pos = oldpos;
         }
         if (amsg.opcode == MessageToProcessor::OP_ChangeIntParameter)
         {
@@ -157,7 +170,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                 if (amsg.par_ivalue == 0)
                 {
                     selfSequence = false;
-                    triggerstatus = 3;
+                    // triggerstatus = 3;
                 }
                 if (amsg.par_ivalue == 1)
                 {
@@ -173,52 +186,62 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     for (auto &pm : playingNotes)
     {
         pm.duration -= buffer.getNumSamples();
-        if (triggerstatus == 3 || pm.duration <= 0)
+        // if (triggerstatus == 3 || pm.duration <= 0)
+        if (pm.duration <= 0)
         {
+            generatedMessages.addEvent(juce::MidiMessage::noteOff(pm.chan, pm.note, 0.0f), 0);
             pm.chan = -1;
-            generatedMessages.addEvent(juce::MidiMessage::noteOff(1, pm.note, 0.0f), 0);
         }
     }
     if (selfSequence)
     {
         for (int i = 0; i < buffer.getNumSamples(); ++i)
         {
-            if (playpos == 0)
+            for (int j = 0; j < num_active_voices; ++j)
             {
-                triggerstatus = 2;
-                // noteofftriggered = true;
+                if (voices[j].playpos == 0)
+                {
+                    triggerstatuses[j] = 2;
+                    // noteofftriggered = true;
+                }
+                ++voices[j].playpos;
+                if (voices[j].playpos == voices[j].pulselen)
+                    voices[j].playpos = 0;
             }
-            ++playpos;
-            if (playpos == pulselen)
-                playpos = 0;
         }
     }
-
-    if (triggerstatus == 1 || triggerstatus == 2)
+    double bpm = 120.0;
+    for (size_t i = 0; i < num_active_voices; ++i)
     {
-        MessageToUI msg;
-        msg.pitchclassplaypos = rowIterators[RID_PITCHCLASS].pos;
-        msg.octaveplaypos = rowIterators[RID_OCTAVE].pos;
-        msg.velocityplaypos = rowIterators[RID_VELOCITY].pos;
-        msg.polyatplaypos = rowIterators[RID_POLYAT].pos;
-        msg.tdeltaplaypos = rowIterators[RID_DELTATIME].pos;
-        int polyat = rowIterators[RID_POLYAT].next();
-        double plen = (1 + rowIterators[RID_DELTATIME].next());
-        double bpm = 120.0;
-        plen = (60.0 / bpm / 4.0) * plen;
-        pulselen = static_cast<int>(getSampleRate() * plen);
-        int octave = rowIterators[RID_OCTAVE].next() - 3;
-        int note = 60 + octave * rows[RID_PITCHCLASS].num_active_entries +
-                   rowIterators[RID_PITCHCLASS].next();
-        msg.soundingpitch = note;
-        fifo_to_ui.push(msg);
-        float velo = juce::jmap<float>(rowIterators[RID_VELOCITY].next(), 0,
-                                       rows[RID_VELOCITY].num_active_entries - 1, velocityLow, 127);
-        generatedMessages.addEvent(juce::MidiMessage::noteOn(1, note, (juce::uint8)velo), 0);
-        int lentouse = notelen;
-        if (triggerstatus == 1)
-            lentouse = 100000000;
-        playingNotes.push_back({1, note, lentouse});
+        if (triggerstatuses[i] == 1 || triggerstatuses[i] == 2)
+        {
+            MessageToUI msg;
+            msg.voice_index = i;
+            msg.pitchclassplaypos = voices[i].rowIterators[RID_PITCHCLASS].pos;
+            msg.octaveplaypos = voices[i].rowIterators[RID_OCTAVE].pos;
+            msg.velocityplaypos = voices[i].rowIterators[RID_VELOCITY].pos;
+            msg.polyatplaypos = voices[i].rowIterators[RID_POLYAT].pos;
+            msg.tdeltaplaypos = voices[i].rowIterators[RID_DELTATIME].pos;
+            int polyat = voices[i].rowIterators[RID_POLYAT].next();
+            double plen = (1 + voices[i].rowIterators[RID_DELTATIME].next());
+
+            plen = (60.0 / bpm / 4.0) * plen;
+            voices[i].pulselen = static_cast<int>(getSampleRate() * plen);
+            int octave = voices[i].rowIterators[RID_OCTAVE].next() - 3;
+            int note = 60 + octave * rows[RID_PITCHCLASS].num_active_entries +
+                       voices[i].rowIterators[RID_PITCHCLASS].next();
+            msg.soundingpitch = note;
+            fifo_to_ui.push(msg);
+            float velo =
+                juce::jmap<float>(voices[i].rowIterators[RID_VELOCITY].next(), 0,
+                                  rows[RID_VELOCITY].num_active_entries - 1, velocityLow, 127);
+            generatedMessages.addEvent(juce::MidiMessage::noteOn(1 + i, note, (juce::uint8)velo),
+                                       0);
+            int lentouse = notelen;
+            if (triggerstatuses[i] == 1)
+                lentouse = 100000000;
+            playingNotes.push_back({int(1 + i), note, lentouse});
+        }
     }
     std::erase_if(playingNotes, [](const auto &t) { return t.chan == -1; });
     midiMessages.swapWith(generatedMessages);
