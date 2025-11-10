@@ -75,15 +75,20 @@ void AudioPluginAudioProcessorEditor::timerCallback()
     MessageToUI msg;
     while (processorRef.fifo_to_ui.pop(msg))
     {
-        if (msg.opcode == 0)
+        if (msg.opcode == MessageToUI::OP_StepPositionChanged)
         {
-            rowComponents[RID_PITCHCLASS]->stepComponent.setPlayingStep(msg.voice_index, msg.pitchclassplaypos);
-            rowComponents[RID_OCTAVE]->stepComponent.setPlayingStep(msg.voice_index, msg.octaveplaypos);
-            rowComponents[RID_VELOCITY]->stepComponent.setPlayingStep(msg.voice_index, msg.velocityplaypos);
-            rowComponents[RID_POLYAT]->stepComponent.setPlayingStep(msg.voice_index, msg.polyatplaypos);
-            rowComponents[RID_DELTATIME]->stepComponent.setPlayingStep(msg.voice_index, msg.tdeltaplaypos);
+            rowComponents[RID_PITCHCLASS]->stepComponent.setPlayingStep(msg.voice_index,
+                                                                        msg.pitchclassplaypos);
+            rowComponents[RID_OCTAVE]->stepComponent.setPlayingStep(msg.voice_index,
+                                                                    msg.octaveplaypos);
+            rowComponents[RID_VELOCITY]->stepComponent.setPlayingStep(msg.voice_index,
+                                                                      msg.velocityplaypos);
+            rowComponents[RID_POLYAT]->stepComponent.setPlayingStep(msg.voice_index,
+                                                                    msg.polyatplaypos);
+            rowComponents[RID_DELTATIME]->stepComponent.setPlayingStep(msg.voice_index,
+                                                                       msg.tdeltaplaypos);
         }
-        if (msg.opcode == 100)
+        if (msg.opcode == MessageToUI::OP_VoiceCountChanged)
         {
             for (auto &c : rowComponents)
             {

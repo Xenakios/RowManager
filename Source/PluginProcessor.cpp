@@ -91,7 +91,7 @@ void AudioPluginAudioProcessor::changeProgramName(int index, const juce::String 
 void AudioPluginAudioProcessor::prepareToPlay(double /*sampleRate*/, int /*samplesPerBlock*/)
 {
     MessageToUI msg;
-    msg.opcode = 100;
+    msg.opcode = MessageToUI::OP_VoiceCountChanged;
     msg.par0 = num_active_voices;
     fifo_to_ui.push(msg);
 }
@@ -216,6 +216,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         if (triggerstatuses[i] == 1 || triggerstatuses[i] == 2)
         {
             MessageToUI msg;
+            msg.opcode = MessageToUI::OP_StepPositionChanged;
             msg.voice_index = i;
             msg.pitchclassplaypos = voices[i].rowIterators[RID_PITCHCLASS].pos;
             msg.octaveplaypos = voices[i].rowIterators[RID_OCTAVE].pos;

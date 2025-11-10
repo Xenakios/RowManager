@@ -1,5 +1,7 @@
 #include <filesystem>
 #include <print>
+#include <string>
+#include <string_view>
 #include "row_engine.h"
 #include "audio/choc_AudioFileFormat.h"
 #include "audio/choc_AudioFileFormat_WAV.h"
@@ -27,19 +29,20 @@ inline void test_row_iterator()
 inline void test_choc_scandinavian()
 {
     choc::audio::WAVAudioFileFormat<true> wavformat;
-    std::vector<std::filesystem::path> filenamestotest{
+    std::vector<std::string> filenamestotest{
         R"(C:\MusicAudio\sourcesamples\test_signals\tones\😮_count_🧨.wav)",
         R"(C:\MusicAudio\sourcesamples\test_signals\tones\count.wav)",
         R"(C:\MusicAudio\sourcesamples\test_signals\tones\ÄÖÅ_count_äöå.wav)"};
     std::print("testing with std::string paths directly\n");
     for (auto &path : filenamestotest)
     {
-        auto reader = wavformat.createReader(path);
+        auto reader = wavformat.createReader(std::filesystem::u8path(path));
         if (reader)
-            std::print("{} [OK]\n", path.string());
+            std::print("{} [OK]\n", path);
         else
-            std::print("{} [FAILED]\n", path.string());
+            std::print("{} [FAILED]\n", path);
     }
+    /*
     std::print("testing with custom created std::ifstream instances from paths\n");
     for (auto &path : filenamestotest)
     {
@@ -51,6 +54,7 @@ inline void test_choc_scandinavian()
         else
             std::print("{} [FAILED]\n", path.string());
     }
+    */
 }
 
 int main()

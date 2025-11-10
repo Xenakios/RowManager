@@ -22,7 +22,13 @@ struct Voice
 
 struct MessageToUI
 {
-    int opcode = 0;
+    enum Op
+    {
+        OP_None,
+        OP_StepPositionChanged,
+        OP_VoiceCountChanged
+    };
+    Op opcode = OP_None;
     int par0 = 0;
     int voice_index = 0;
     int pitchclassplaypos = 0;
