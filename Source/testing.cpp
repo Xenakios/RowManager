@@ -1,3 +1,4 @@
+#include <exception>
 #include <filesystem>
 #include <print>
 #include <string>
@@ -57,9 +58,28 @@ inline void test_choc_scandinavian()
     */
 }
 
-int main()
+inline void test_cli_choc_path(std::string path)
 {
-    test_choc_scandinavian();
+    choc::audio::WAVAudioFileFormat<true> wavformat;
+    try
+    {
+        auto reader = wavformat.createReader(std::filesystem::u8path(path));
+        if (reader)
+            std::print("{} [OK]\n", path);
+        else
+            std::print("{} [FAILED]\n", path);
+    }
+    catch (std::exception &ex)
+    {
+        std::print("{}\n", ex.what());
+    }
+}
+
+int main(int argc, char **argv)
+{
+    if (argc > 1)
+        test_cli_choc_path(argv[1]);
+    // test_choc_scandinavian();
     // test_row_iterator();
     return 0;
 }

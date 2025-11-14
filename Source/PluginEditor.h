@@ -123,6 +123,18 @@ class RowComponent : public juce::Component
         infoLabel.setText(name, juce::dontSendNotification);
         infoLabel.setColour(juce::Label::textColourId, juce::Colours::black);
         addAndMakeVisible(infoLabel);
+
+        addAndMakeVisible(baseCombo);
+        for (int i = 4; i < 33; ++i)
+        {
+            baseCombo.addItem(juce::String(i), i);
+        }
+        baseCombo.setSelectedId(initialRow.num_active_entries, juce::dontSendNotification);
+        baseCombo.onChange=[this](){
+            stepComponent.steps.num_active_entries = baseCombo.getSelectedId();
+            stepComponent.repaint();
+        };
+
         stepComponent.readonly = false;
         stepComponent.OnEdited = [this]() {
             if (OnEdited)
@@ -181,13 +193,15 @@ class RowComponent : public juce::Component
     {
         infoLabel.setBounds(0, 0, getWidth(), 25);
         stepComponent.setBounds(0, 25, getWidth(), getHeight() - 50);
-        menuButton.setBounds(1, stepComponent.getBottom() + 1, 100, 24);
+        baseCombo.setBounds(1, stepComponent.getBottom() + 1, 60, 24);
+        menuButton.setBounds(baseCombo.getRight() + 1, stepComponent.getBottom() + 1, 100, 24);
     }
     void paint(juce::Graphics &g) override { g.fillAll(juce::Colours::orange); }
     size_t rowid = 0;
     std::function<void(size_t)> OnEdited;
     toproc_fifo_t &toproc_fifo;
     juce::Label infoLabel;
+    juce::ComboBox baseCombo;
     juce::TextButton menuButton;
     MultiStepComponent stepComponent;
 };
