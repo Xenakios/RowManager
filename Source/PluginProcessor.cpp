@@ -18,7 +18,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     pending_rows.reserve(64);
     fifo_to_ui.reset(1024);
     fifo_to_processor.reset(1024);
-    rows[RID_PITCHCLASS] = Row::make_all_interval(7);
+    rows[RID_PITCHCLASS] = Row::make_all_interval(12);
     // rows[RID_PITCHCLASS].num_active_entries = 12;
     // for (int i = 0; i < 12; ++i)
     //     rows[RID_PITCHCLASS].entries[i] = (i * 7) % 12;
@@ -32,7 +32,10 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
         for (size_t j = 0; j < RID_LAST; ++j)
         {
             voices[i].rowIterators[j] = Row::Iterator(rows[j], RowTransform());
-            // rowIterators[i].repetitions = rowRepeats[i];
+            if (j == RID_OCTAVE)
+            {
+                voices[i].rowIterators[j].repetitions = 6;
+            }
         }
     }
 
@@ -124,7 +127,16 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 {
     jassert(num_active_voices <= max_poly_voices);
     juce::ScopedNoDenormals noDenormals;
-
+    ph = getPlayHead();
+    if (ph)
+    {
+        auto pos = ph->getPosition();
+        if (pos)
+        {
+            curBPM = pos->getBpm().orFallback(120.0);
+            curPPQPos = pos->getPpqPosition().orFallback(0.0);
+        }
+    }
     generatedMessages.clear();
     keyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(), true);
     std::array<int, max_poly_voices> triggerstatuses;

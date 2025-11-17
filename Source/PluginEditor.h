@@ -16,7 +16,7 @@ class MultiStepComponent : public juce::Component
     MultiStepComponent() { std::fill(playingsteps.begin(), playingsteps.end(), -1); }
     bool readonly = true;
     std::array<int, max_poly_voices> playingsteps;
-    void setPlayingStep(int voice_index, int p)
+    void setPlayingStep(size_t voice_index, int p)
     {
         playingsteps[voice_index] = p;
         repaint();
@@ -259,7 +259,7 @@ class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor,
   private:
     AudioPluginAudioProcessor &processorRef;
     std::vector<std::unique_ptr<RowComponent>> rowComponents;
-    void doTransform();
+    
     juce::ToggleButton selfSequenceToggle;
     juce::Label debugLabel;
     bool rowValid = false;

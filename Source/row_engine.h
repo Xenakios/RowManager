@@ -102,6 +102,8 @@ class Row
       public:
         Row *row = nullptr;
         RowTransform transform;
+        int repetitions = 1;
+        int repetition_counter = 0;
         int pos = 0;
         Iterator() = default;
         Iterator(Row &r, RowTransform t) : row(&r), transform(t) {}
@@ -118,9 +120,14 @@ class Row
             uint16_t result = (row->entries[rpos] + transform.transpose) % row->num_active_entries;
             if (transform.inverted)
                 result = (row->num_active_entries - result) % row->num_active_entries;
-            ++pos;
-            if (pos == row->num_active_entries)
-                pos = 0;
+            if (repetition_counter == repetitions)
+            {
+                repetition_counter = 0;
+                ++pos;
+                if (pos == row->num_active_entries)
+                    pos = 0;
+            }
+            ++repetition_counter;
             return result;
         }
         uint16_t get_transformed_position(uint64_t p)

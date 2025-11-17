@@ -4,6 +4,7 @@
 #include "juce_graphics/juce_graphics.h"
 #include "juce_gui_basics/juce_gui_basics.h"
 #include "row_engine.h"
+#include <cstdint>
 #include "PluginEditor.h"
 
 //==============================================================================
@@ -99,11 +100,13 @@ void AudioPluginAudioProcessorEditor::timerCallback()
     }
     juce::String txt;
     txt << processorRef.playingNotes.size() << " playing notes ";
-    txt << processorRef.pending_rows.size() << " pending row changes";
+    txt << processorRef.pending_rows.size() << " pending row changes, BPM ";
+    txt << processorRef.curBPM;
+    txt << " cur PPQ Pos " << processorRef.curPPQPos;
     debugLabel.setText(txt, juce::dontSendNotification);
 }
 
-void AudioPluginAudioProcessorEditor::doTransform() {}
+
 
 //==============================================================================
 void AudioPluginAudioProcessorEditor::paint(juce::Graphics &g)

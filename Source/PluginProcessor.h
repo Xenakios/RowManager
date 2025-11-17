@@ -94,9 +94,10 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     void getStateInformation(juce::MemoryBlock &destData) override;
     void setStateInformation(const void *data, int sizeInBytes) override;
     std::array<Row, RID_LAST> rows;
-    // std::array<Row::Iterator, RID_LAST> rowIterators;
     std::array<size_t, RID_LAST> rowRepeats;
-
+    juce::AudioPlayHead *ph = nullptr;
+    std::atomic<double> curBPM{120.0};
+    std::atomic<double> curPPQPos{0.0};
     struct PendingRowInfo
     {
         size_t row_index = 0;
@@ -117,8 +118,7 @@ class AudioPluginAudioProcessor final : public juce::AudioProcessor
     };
     std::vector<NoteInfo> playingNotes;
     juce::MidiBuffer generatedMessages;
-    // int playpos = 0;
-    // int pulselen = 11025;
+    
     int notelen = 11025;
     choc::fifo::SingleReaderSingleWriterFIFO<MessageToUI> fifo_to_ui;
 
